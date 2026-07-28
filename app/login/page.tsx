@@ -27,10 +27,13 @@ export default function LoginPage() {
   );
 }
 
+const MESSAGE_PROFIL_MANQUANT =
+  "Ce compte existe mais n'est associé à aucune entreprise (une inscription précédente a probablement été interrompue avant la fin). Recommencez avec « Créer une entreprise » ou « Rejoindre », ou contactez votre administrateur.";
+
 function LoginPageInterne() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { rafraichirProfil } = useAuth();
+  const { appliquerSession } = useAuth();
 
   const [mode, setMode] = useState<Mode>("connexion");
   const [email, setEmail] = useState("");
@@ -40,15 +43,16 @@ function LoginPageInterne() {
   const [codeEntreprise, setCodeEntreprise] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(
-    searchParams.get("raison") === "profil_manquant"
-      ? "Ce compte existe mais n'est associé à aucune entreprise (une inscription précédente a probablement été interrompue avant la fin). Recommencez avec « Créer une entreprise » ou « Rejoindre », ou contactez votre administrateur."
-      : null
+    searchParams.get("raison") === "profil_manquant" ? MESSAGE_PROFIL_MANQUANT : null
   );
   const [chargement, setChargement] = useState(false);
 
   const allerAuTableauDeBord = () => {
-    router.push("/dashboard");
-    router.refresh();
+    // Pas de router.refresh() ici : ce site est un export statique sans
+    // serveur, donc rien à "rafraîchir" côté serveur — cet appel provoquait
+    // une navigation fantôme qui ramenait sur /login juste après l'arrivée
+    // sur /dashboard.
+    router.push("/dashboard/");
   };
 
   const gererConnexion = async (e: React.FormEvent) => {
@@ -56,15 +60,29 @@ function LoginPageInterne() {
     setErreur(null);
     setInfo(null);
     setChargement(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password: motDePasse,
     });
-    setChargement(false);
     if (error) {
+      setChargement(false);
       setErreur(messageErreurConnexion(error.message));
       return;
     }
+
+    // On attend que le profil soit chargé dans le contexte avant de
+    // naviguer : se fier au seul événement onAuthStateChange (asynchrone,
+    // minutage non garanti) pouvait faire arriver sur /dashboard avant que
+    // la session y soit visible, ce qui renvoyait aussitôt vers /login.
+    const profilCharge = await appliquerSession(data.session);
+    setChargement(false);
+
+    if (!profilCharge) {
+      await supabase.auth.signOut();
+      setInfo(MESSAGE_PROFIL_MANQUANT);
+      return;
+    }
+
     allerAuTableauDeBord();
   };
 
@@ -112,13 +130,19 @@ function LoginPageInterne() {
       nom,
       role: "admin",
     });
-    setChargement(false);
     if (profilError) {
+      setChargement(false);
       setErreur("Impossible de créer le profil : " + profilError.message);
       return;
     }
 
-    await rafraichirProfil();
+    const profilCharge = await appliquerSession(authData.session);
+    setChargement(false);
+    if (!profilCharge) {
+      setErreur("Le profil vient d'être créé mais n'a pas pu être chargé. Réessayez de vous connecter.");
+      return;
+    }
+
     allerAuTableauDeBord();
   };
 
@@ -152,8 +176,8 @@ function LoginPageInterne() {
       nom,
       role: "employe",
     });
-    setChargement(false);
     if (profilError) {
+      setChargement(false);
       setErreur(
         "Impossible de rejoindre l'entreprise. Vérifiez le code fourni par votre administrateur : " +
           profilError.message
@@ -161,7 +185,13 @@ function LoginPageInterne() {
       return;
     }
 
-    await rafraichirProfil();
+    const profilCharge = await appliquerSession(authData.session);
+    setChargement(false);
+    if (!profilCharge) {
+      setErreur("Le profil vient d'être créé mais n'a pas pu être chargé. Réessayez de vous connecter.");
+      return;
+    }
+
     allerAuTableauDeBord();
   };
 
