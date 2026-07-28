@@ -90,10 +90,45 @@ supabase/
 
 ## Déploiement
 
+### Hébergement définitif (Vercel ou Render)
+
 1. Pousser le repo sur GitHub
 2. Connecter le repo à Vercel (ou Render)
 3. Renseigner `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    dans les réglages du projet d'hébergement
+
+### En attendant : GitHub Pages (provisoire)
+
+L'application est un client Supabase pur (aucune route API, aucun rendu
+serveur), donc elle peut être exportée en site statique et servie
+gratuitement par GitHub Pages le temps de mettre en place l'hébergement
+définitif.
+
+Le fichier [`next.config.ts`](./next.config.ts) active `output: "export"` et
+n'ajoute le `basePath`/`assetPrefix` `/Le-gestionnaire` que lorsque la
+variable `GITHUB_PAGES=true` est présente (donc `npm run dev` en local n'est
+pas affecté). Le workflow
+[`.github/workflows/deploy-gh-pages.yml`](./.github/workflows/deploy-gh-pages.yml)
+construit le site et le publie automatiquement.
+
+Étapes pour l'activer (une seule fois) :
+
+1. **Settings → Secrets and variables → Actions → New repository secret** :
+   ajouter `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY` (les
+   mêmes valeurs que `.env.local` — ce ne sont pas des secrets sensibles,
+   elles finissent de toute façon dans le JavaScript public du site, mais un
+   secret Actions évite de les committer en clair).
+2. **Settings → Pages → Build and deployment → Source** : choisir
+   **GitHub Actions**.
+3. Pousser sur `main` (ou lancer le workflow manuellement depuis l'onglet
+   **Actions → Déployer sur GitHub Pages → Run workflow**, possible même
+   depuis une branche non fusionnée).
+4. Le site est publié sur `https://<utilisateur>.github.io/Le-gestionnaire/`.
+
+Limite à connaître : les identifiants Supabase publics (URL + clé anonyme)
+sont visibles dans le bundle JS, comme sur n'importe quel déploiement
+frontend Supabase — la sécurité repose sur les policies RLS, pas sur le
+secret de ces valeurs.
 
 ## Prévu pour la V2
 
