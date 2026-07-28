@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import Sidebar from "@/components/Sidebar";
 
@@ -10,8 +11,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!chargement && (!session || !profil)) {
+    if (chargement) return;
+
+    if (!session) {
       router.replace("/login");
+      return;
+    }
+
+    if (!profil) {
+      // Session valide mais sans ligne "utilisateurs" associée (inscription
+      // interrompue en cours de route) : on déconnecte pour éviter que la
+      // prochaine connexion retombe silencieusement dans cette même
+      // impasse, et on explique pourquoi sur /login.
+      supabase.auth.signOut().finally(() => {
+        router.replace("/login?raison=profil_manquant");
+      });
     }
   }, [chargement, session, profil, router]);
 

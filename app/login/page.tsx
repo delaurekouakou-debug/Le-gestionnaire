@@ -1,15 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Boxes, ClipboardList, ShieldCheck, TrendingUp } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 
 type Mode = "connexion" | "creer" | "rejoindre";
 
+function messageErreurConnexion(message: string | undefined): string {
+  if (!message) return "Identifiants invalides. Vérifiez votre email et mot de passe.";
+  if (message.toLowerCase().includes("email not confirmed")) {
+    return "Cet email n'a pas encore été confirmé. Vérifiez votre boîte de réception (et les spams) pour le lien de confirmation envoyé par Supabase.";
+  }
+  if (message.toLowerCase().includes("invalid login credentials")) {
+    return "Identifiants invalides. Vérifiez votre email et mot de passe.";
+  }
+  return message;
+}
+
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInterne />
+    </Suspense>
+  );
+}
+
+function LoginPageInterne() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { rafraichirProfil } = useAuth();
 
   const [mode, setMode] = useState<Mode>("connexion");
@@ -19,6 +39,11 @@ export default function LoginPage() {
   const [nomEntreprise, setNomEntreprise] = useState("");
   const [codeEntreprise, setCodeEntreprise] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(
+    searchParams.get("raison") === "profil_manquant"
+      ? "Ce compte existe mais n'est associé à aucune entreprise (une inscription précédente a probablement été interrompue avant la fin). Recommencez avec « Créer une entreprise » ou « Rejoindre », ou contactez votre administrateur."
+      : null
+  );
   const [chargement, setChargement] = useState(false);
 
   const allerAuTableauDeBord = () => {
@@ -29,6 +54,7 @@ export default function LoginPage() {
   const gererConnexion = async (e: React.FormEvent) => {
     e.preventDefault();
     setErreur(null);
+    setInfo(null);
     setChargement(true);
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -36,7 +62,7 @@ export default function LoginPage() {
     });
     setChargement(false);
     if (error) {
-      setErreur("Identifiants invalides. Vérifiez votre email et mot de passe.");
+      setErreur(messageErreurConnexion(error.message));
       return;
     }
     allerAuTableauDeBord();
@@ -45,6 +71,7 @@ export default function LoginPage() {
   const gererCreationEntreprise = async (e: React.FormEvent) => {
     e.preventDefault();
     setErreur(null);
+    setInfo(null);
     setChargement(true);
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -54,6 +81,14 @@ export default function LoginPage() {
     if (authError || !authData.user) {
       setChargement(false);
       setErreur(authError?.message ?? "Impossible de créer le compte.");
+      return;
+    }
+
+    if (!authData.session) {
+      setChargement(false);
+      setInfo(
+        "Compte créé. Ce projet Supabase exige une confirmation par email : vérifiez votre boîte de réception, cliquez sur le lien reçu, puis revenez sur « Créer une entreprise » avec les mêmes identifiants pour terminer l'inscription."
+      );
       return;
     }
 
@@ -90,6 +125,7 @@ export default function LoginPage() {
   const gererRejoindre = async (e: React.FormEvent) => {
     e.preventDefault();
     setErreur(null);
+    setInfo(null);
     setChargement(true);
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -99,6 +135,14 @@ export default function LoginPage() {
     if (authError || !authData.user) {
       setChargement(false);
       setErreur(authError?.message ?? "Impossible de créer le compte.");
+      return;
+    }
+
+    if (!authData.session) {
+      setChargement(false);
+      setInfo(
+        "Compte créé. Ce projet Supabase exige une confirmation par email : vérifiez votre boîte de réception, cliquez sur le lien reçu, puis revenez sur « Rejoindre » avec les mêmes identifiants pour terminer l'inscription."
+      );
       return;
     }
 
@@ -186,6 +230,12 @@ export default function LoginPage() {
             <p className="mt-1 text-sm text-chart-muted">Connectez-vous à votre espace</p>
           </div>
 
+          {info && (
+            <p className="rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+              {info}
+            </p>
+          )}
+
           <div className="flex rounded-lg border border-zinc-200 p-1 text-sm dark:border-zinc-800">
             {(
               [
@@ -200,6 +250,7 @@ export default function LoginPage() {
                 onClick={() => {
                   setMode(valeur);
                   setErreur(null);
+                  setInfo(null);
                 }}
                 className={`flex-1 whitespace-nowrap rounded-md px-1.5 py-1.5 text-xs transition sm:text-sm ${
                   mode === valeur
