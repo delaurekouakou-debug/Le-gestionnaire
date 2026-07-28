@@ -19,6 +19,17 @@ function messageErreurConnexion(message: string | undefined): string {
   return message;
 }
 
+function messageErreurInscription(message: string | undefined): string {
+  if (!message) return "Impossible de créer le compte.";
+  if (message.toLowerCase().includes("email rate limit exceeded")) {
+    return "Trop de tentatives d'inscription en peu de temps : Supabase limite l'envoi d'emails de confirmation sur le plan gratuit. Réessayez dans quelques minutes, ou désactivez « Confirm email » dans Authentication → Providers → Email sur le dashboard Supabase pour ne plus en dépendre.";
+  }
+  if (message.toLowerCase().includes("user already registered")) {
+    return "Un compte existe déjà avec cet email. Utilisez plutôt l'onglet « Connexion », ou réinitialisez le mot de passe si besoin.";
+  }
+  return message;
+}
+
 export default function LoginPage() {
   return (
     <Suspense fallback={null}>
@@ -98,7 +109,7 @@ function LoginPageInterne() {
     });
     if (authError || !authData.user) {
       setChargement(false);
-      setErreur(authError?.message ?? "Impossible de créer le compte.");
+      setErreur(messageErreurInscription(authError?.message));
       return;
     }
 
@@ -158,7 +169,7 @@ function LoginPageInterne() {
     });
     if (authError || !authData.user) {
       setChargement(false);
-      setErreur(authError?.message ?? "Impossible de créer le compte.");
+      setErreur(messageErreurInscription(authError?.message));
       return;
     }
 
