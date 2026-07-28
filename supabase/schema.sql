@@ -70,7 +70,10 @@ as $$
   select entreprise_id from utilisateurs where id = auth.uid();
 $$;
 
-create or replace function public.current_role()
+-- Nommée current_utilisateur_role() (et non current_role()) car CURRENT_ROLE
+-- est un mot-clé réservé de PostgreSQL (comme CURRENT_USER) : il ne peut pas
+-- être invoqué avec des parenthèses explicites dans une expression.
+create or replace function public.current_utilisateur_role()
 returns text
 language sql
 security definer
@@ -132,7 +135,7 @@ create policy "insert_entreprise" on entreprises
   for insert with check (auth.uid() is not null);
 
 create policy "update_entreprise" on entreprises
-  for update using (id = current_entreprise_id() and current_role() = 'admin');
+  for update using (id = current_entreprise_id() and current_utilisateur_role() = 'admin');
 
 -- utilisateurs : visibles par les membres de la même entreprise. Un
 -- utilisateur ne peut créer que sa propre ligne de profil (id = auth.uid()),
@@ -148,12 +151,12 @@ create policy "insert_utilisateurs" on utilisateurs
 create policy "update_utilisateurs" on utilisateurs
   for update using (
     id = auth.uid()
-    or (current_role() = 'admin' and entreprise_id = current_entreprise_id())
+    or (current_utilisateur_role() = 'admin' and entreprise_id = current_entreprise_id())
   );
 
 create policy "delete_utilisateurs" on utilisateurs
   for delete using (
-    current_role() = 'admin'
+    current_utilisateur_role() = 'admin'
     and entreprise_id = current_entreprise_id()
     and id <> auth.uid()
   );
