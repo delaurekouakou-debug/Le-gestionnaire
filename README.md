@@ -36,6 +36,14 @@ crée les tables (`entreprises`, `utilisateurs`, `produits`, `mouvements`), un
 trigger qui met à jour automatiquement la quantité d'un produit à chaque
 mouvement, et les policies RLS qui isolent les données par entreprise.
 
+Si l'éditeur SQL affiche une erreur en cours de script (le script s'arrête
+alors avant la fin, les policies RLS peuvent manquer sans que les tables
+soient affectées — symptôme typique : `new row violates row-level security
+policy`), rejouez [`supabase/repair_policies.sql`](./supabase/repair_policies.sql)
+: il recrée uniquement les fonctions, le trigger et les policies, sans
+toucher aux tables ni aux données, et peut être relancé sans risque autant
+de fois que nécessaire.
+
 ### 3. Configurer les variables d'environnement
 
 Copier `.env.local.example` vers `.env.local` et renseigner les valeurs du
