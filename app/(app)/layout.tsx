@@ -10,10 +10,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!chargement && !session) {
+    if (!chargement && (!session || !profil)) {
       router.replace("/login");
     }
-  }, [chargement, session, router]);
+  }, [chargement, session, profil, router]);
 
   if (chargement || !session || !profil) {
     return (

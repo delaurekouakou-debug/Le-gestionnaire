@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 
 export default function Home() {
-  const { session, chargement } = useAuth();
+  const { session, profil, chargement } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (chargement) return;
-    router.replace(session ? "/dashboard" : "/login");
-  }, [chargement, session, router]);
+    router.replace(session && profil ? "/dashboard" : "/login");
+  }, [chargement, session, profil, router]);
 
   return (
     <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
