@@ -30,8 +30,12 @@ jobs:
       - run: npm run build
         env:
           GITHUB_PAGES: "true"
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # Clé publique (publishable) Supabase : conçue pour être exposée
+          # côté client, comme n'importe quelle clé anonyme Supabase — la
+          # sécurité des données repose sur les policies RLS (voir
+          # supabase/schema.sql), pas sur le secret de cette valeur.
+          NEXT_PUBLIC_SUPABASE_URL: "https://nqxksuxqotaxycvuztnr.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_Z5kKGj4qWW1c0dAuQK3YcA_vvLpXBte"
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -109,21 +109,17 @@ n'ajoute le `basePath`/`assetPrefix` `/Le-gestionnaire` que lorsque la
 variable `GITHUB_PAGES=true` est présente (donc `npm run dev` en local n'est
 pas affecté). Le workflow
 [`.github/workflows/deploy-gh-pages.yml`](./.github/workflows/deploy-gh-pages.yml)
-construit le site et le publie automatiquement.
+construit le site et le publie automatiquement — l'URL et la clé publique
+(publishable) Supabase du projet y sont déjà renseignées.
 
 Étapes pour l'activer (une seule fois) :
 
-1. **Settings → Secrets and variables → Actions → New repository secret** :
-   ajouter `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY` (les
-   mêmes valeurs que `.env.local` — ce ne sont pas des secrets sensibles,
-   elles finissent de toute façon dans le JavaScript public du site, mais un
-   secret Actions évite de les committer en clair).
-2. **Settings → Pages → Build and deployment → Source** : choisir
+1. **Settings → Pages → Build and deployment → Source** : choisir
    **GitHub Actions**.
-3. Pousser sur `main` (ou lancer le workflow manuellement depuis l'onglet
+2. Pousser sur `main` (ou lancer le workflow manuellement depuis l'onglet
    **Actions → Déployer sur GitHub Pages → Run workflow**, possible même
    depuis une branche non fusionnée).
-4. Le site est publié sur `https://<utilisateur>.github.io/Le-gestionnaire/`.
+3. Le site est publié sur `https://<utilisateur>.github.io/Le-gestionnaire/`.
 
 Limite à connaître : les identifiants Supabase publics (URL + clé anonyme)
 sont visibles dans le bundle JS, comme sur n'importe quel déploiement
