@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Boxes, ClipboardList, ShieldCheck, TrendingUp } from "lucide-react";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -28,6 +29,50 @@ function messageErreurInscription(message: string | undefined): string {
     return "Un compte existe déjà avec cet email. Utilisez plutôt l'onglet « Connexion », ou réinitialisez le mot de passe si besoin.";
   }
   return message;
+}
+
+type ResultatCompte =
+  | { type: "ok"; session: Session; userId: string }
+  | { type: "confirmation_requise" }
+  | { type: "erreur"; message: string };
+
+// Crée le compte, ou — s'il existe déjà (ex : une précédente tentative de
+// "Créer une entreprise"/"Rejoindre" a été interrompue après le signUp mais
+// avant la création du profil) — se connecte directement avec les mêmes
+// identifiants pour reprendre l'inscription là où elle s'était arrêtée.
+// Sans ça, un compte dans cet état bloquait l'utilisateur entre "Créer une
+// entreprise" (rejeté : déjà enregistré) et "Connexion" (renvoyé : pas de
+// profil), sans issue.
+async function obtenirCompte(email: string, motDePasse: string): Promise<ResultatCompte> {
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password: motDePasse,
+  });
+
+  if (authError?.message?.toLowerCase().includes("user already registered")) {
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: motDePasse,
+    });
+    if (signInError || !signInData.session || !signInData.user) {
+      return {
+        type: "erreur",
+        message:
+          "Un compte existe déjà avec cet email, mais le mot de passe saisi ne correspond pas à celui utilisé précédemment. Utilisez l'onglet « Connexion » avec le bon mot de passe, ou contactez votre administrateur.",
+      };
+    }
+    return { type: "ok", session: signInData.session, userId: signInData.user.id };
+  }
+
+  if (authError || !authData.user) {
+    return { type: "erreur", message: messageErreurInscription(authError?.message) };
+  }
+
+  if (!authData.session) {
+    return { type: "confirmation_requise" };
+  }
+
+  return { type: "ok", session: authData.session, userId: authData.user.id };
 }
 
 export default function LoginPage() {
@@ -103,21 +148,30 @@ function LoginPageInterne() {
     setInfo(null);
     setChargement(true);
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password: motDePasse,
-    });
-    if (authError || !authData.user) {
+    const resultat = await obtenirCompte(email, motDePasse);
+
+    if (resultat.type === "erreur") {
       setChargement(false);
-      setErreur(messageErreurInscription(authError?.message));
+      setErreur(resultat.message);
       return;
     }
-
-    if (!authData.session) {
+    if (resultat.type === "confirmation_requise") {
       setChargement(false);
       setInfo(
         "Compte créé. Ce projet Supabase exige une confirmation par email : vérifiez votre boîte de réception, cliquez sur le lien reçu, puis revenez sur « Créer une entreprise » avec les mêmes identifiants pour terminer l'inscription."
       );
+      return;
+    }
+
+    const { session, userId } = resultat;
+
+    // Le compte pouvait déjà avoir un profil (ex : la création avait en fait
+    // abouti lors d'une tentative précédente malgré une coupure juste après)
+    // — dans ce cas on se contente de se connecter, sans recréer d'entreprise.
+    const profilExistant = await appliquerSession(session);
+    if (profilExistant) {
+      setChargement(false);
+      allerAuTableauDeBord();
       return;
     }
 
@@ -129,14 +183,14 @@ function LoginPageInterne() {
     if (entrepriseError || !entreprise) {
       setChargement(false);
       setErreur(
-        "Compte créé mais impossible de créer l'entreprise : " +
+        "Compte prêt mais impossible de créer l'entreprise : " +
           (entrepriseError?.message ?? "erreur inconnue")
       );
       return;
     }
 
     const { error: profilError } = await supabase.from("utilisateurs").insert({
-      id: authData.user.id,
+      id: userId,
       entreprise_id: entreprise.id,
       nom,
       role: "admin",
@@ -147,7 +201,7 @@ function LoginPageInterne() {
       return;
     }
 
-    const profilCharge = await appliquerSession(authData.session);
+    const profilCharge = await appliquerSession(session);
     setChargement(false);
     if (!profilCharge) {
       setErreur("Le profil vient d'être créé mais n'a pas pu être chargé. Réessayez de vous connecter.");
@@ -163,17 +217,14 @@ function LoginPageInterne() {
     setInfo(null);
     setChargement(true);
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password: motDePasse,
-    });
-    if (authError || !authData.user) {
+    const resultat = await obtenirCompte(email, motDePasse);
+
+    if (resultat.type === "erreur") {
       setChargement(false);
-      setErreur(messageErreurInscription(authError?.message));
+      setErreur(resultat.message);
       return;
     }
-
-    if (!authData.session) {
+    if (resultat.type === "confirmation_requise") {
       setChargement(false);
       setInfo(
         "Compte créé. Ce projet Supabase exige une confirmation par email : vérifiez votre boîte de réception, cliquez sur le lien reçu, puis revenez sur « Rejoindre » avec les mêmes identifiants pour terminer l'inscription."
@@ -181,8 +232,17 @@ function LoginPageInterne() {
       return;
     }
 
+    const { session, userId } = resultat;
+
+    const profilExistant = await appliquerSession(session);
+    if (profilExistant) {
+      setChargement(false);
+      allerAuTableauDeBord();
+      return;
+    }
+
     const { error: profilError } = await supabase.from("utilisateurs").insert({
-      id: authData.user.id,
+      id: userId,
       entreprise_id: codeEntreprise.trim(),
       nom,
       role: "employe",
@@ -196,7 +256,7 @@ function LoginPageInterne() {
       return;
     }
 
-    const profilCharge = await appliquerSession(authData.session);
+    const profilCharge = await appliquerSession(session);
     setChargement(false);
     if (!profilCharge) {
       setErreur("Le profil vient d'être créé mais n'a pas pu être chargé. Réessayez de vous connecter.");
