@@ -116,10 +116,13 @@ construit le site et le publie automatiquement — l'URL et la clé publique
 
 1. **Settings → Pages → Build and deployment → Source** : choisir
    **GitHub Actions**.
-2. Pousser sur `main` (ou lancer le workflow manuellement depuis l'onglet
-   **Actions → Déployer sur GitHub Pages → Run workflow**, possible même
-   depuis une branche non fusionnée).
-3. Le site est publié sur `https://<utilisateur>.github.io/Le-gestionnaire/`.
+2. S'assurer que ce workflow est présent sur la branche par défaut (`main`)
+   — GitHub n'autorise le déclenchement manuel (`workflow_dispatch`) que si
+   le fichier existe déjà sur cette branche, même pour lancer une exécution
+   sur une autre branche.
+3. Pousser sur `main`, ou lancer le workflow manuellement depuis l'onglet
+   **Actions → Déployer sur GitHub Pages → Run workflow**.
+4. Le site est publié sur `https://<utilisateur>.github.io/Le-gestionnaire/`.
 
 Limite à connaître : les identifiants Supabase publics (URL + clé anonyme)
 sont visibles dans le bundle JS, comme sur n'importe quel déploiement
