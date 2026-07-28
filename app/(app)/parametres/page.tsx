@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Check, Copy } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import type { Entreprise, Role, Utilisateur } from "@/lib/types";
@@ -49,37 +50,52 @@ export default function ParametresPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold">Paramètres</h1>
+      <div>
+        <h1 className="text-xl font-bold text-chart-ink">Paramètres</h1>
+        <p className="text-sm text-chart-muted">Entreprise, invitations et droits d&apos;accès</p>
+      </div>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="text-lg font-semibold">Entreprise</h2>
+      <section className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800">
+        <h2 className="text-sm font-semibold text-chart-ink">Entreprise</h2>
         {chargement ? (
-          <p className="mt-2 text-sm text-zinc-500">Chargement…</p>
+          <p className="mt-2 text-sm text-chart-muted">Chargement…</p>
         ) : (
-          <div className="mt-2 space-y-2 text-sm">
+          <div className="mt-3 space-y-2 text-sm">
             <p>
-              <span className="text-zinc-500">Nom : </span>
-              {entreprise?.nom}
+              <span className="text-chart-muted">Nom : </span>
+              <span className="text-chart-ink">{entreprise?.nom}</span>
             </p>
             <p>
-              <span className="text-zinc-500">Plan : </span>
-              {entreprise?.plan_abonnement}
+              <span className="text-chart-muted">Plan : </span>
+              <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+                {entreprise?.plan_abonnement}
+              </span>
             </p>
             {estAdmin && entreprise && (
-              <div>
-                <p className="text-zinc-500">
+              <div className="pt-2">
+                <p className="text-chart-muted">
                   Code entreprise (à transmettre à vos employés pour qu&apos;ils rejoignent
                   votre espace depuis la page de connexion) :
                 </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <code className="rounded bg-zinc-100 px-2 py-1 text-xs dark:bg-zinc-800">
+                <div className="mt-1.5 flex items-center gap-2">
+                  <code className="rounded bg-zinc-100 px-2 py-1 text-xs text-chart-ink dark:bg-zinc-800">
                     {entreprise.id}
                   </code>
                   <button
                     onClick={copierCode}
-                    className="rounded-md border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                    className="flex items-center gap-1 rounded-md border border-zinc-300 px-2 py-1 text-xs text-chart-ink-secondary hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
                   >
-                    {copie ? "Copié !" : "Copier"}
+                    {copie ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-good" strokeWidth={2.5} />
+                        Copié
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" strokeWidth={2} />
+                        Copier
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -88,11 +104,11 @@ export default function ParametresPage() {
         )}
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="text-lg font-semibold">Utilisateurs</h2>
+      <section className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800">
+        <h2 className="text-sm font-semibold text-chart-ink">Utilisateurs</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-zinc-100 text-left dark:bg-zinc-800">
+            <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-chart-muted dark:bg-zinc-900">
               <tr>
                 <th className="px-3 py-2">Nom</th>
                 <th className="px-3 py-2">Rôle</th>
@@ -102,15 +118,15 @@ export default function ParametresPage() {
             <tbody>
               {utilisateurs.map((u) => (
                 <tr key={u.id} className="border-t border-zinc-200 dark:border-zinc-800">
-                  <td className="px-3 py-2">{u.nom}</td>
-                  <td className="px-3 py-2 capitalize">{u.role}</td>
+                  <td className="px-3 py-2 text-chart-ink">{u.nom}</td>
+                  <td className="px-3 py-2 capitalize text-chart-ink-secondary">{u.role}</td>
                   {estAdmin && (
                     <td className="px-3 py-2">
                       {u.id !== profil?.id && (
                         <select
                           value={u.role}
                           onChange={(e) => changerRole(u.id, e.target.value as Role)}
-                          className="rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+                          className="rounded-md border border-zinc-300 px-2 py-1 text-xs focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-zinc-700 dark:bg-zinc-950"
                         >
                           <option value="admin">Administrateur</option>
                           <option value="employe">Employé</option>

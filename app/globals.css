@@ -1,8 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f9f9f7;
+  --foreground: #0b0b0b;
+
+  /* Brand — sequential blue ramp (validated, see supabase/schema.sql sibling doc) */
+  --color-brand-50: #eef5fd;
+  --color-brand-100: #cde2fb;
+  --color-brand-200: #9ec5f4;
+  --color-brand-300: #6da7ec;
+  --color-brand-400: #3987e5;
+  --color-brand-500: #2a78d6;
+  --color-brand-600: #256abf;
+  --color-brand-700: #184f95;
+  --color-brand-800: #104281;
+  --color-brand-900: #0d366b;
+
+  /* Chrome — deep navy sidebar, not a data color */
+  --color-navy-950: #0a1120;
+  --color-navy-900: #0f1a2e;
+  --color-navy-800: #17233b;
+  --color-navy-700: #22314e;
+  --color-navy-400: #7d90b3;
+  --color-navy-200: #c3ccdd;
+
+  /* Status — fixed, mode-invariant, never themed */
+  --color-good: #0ca30c;
+  --color-warning: #fab219;
+  --color-critical: #d03b3b;
+
+  /* Series — categorical, fixed order (entrée / sortie / ajustement) */
+  --color-series-entree: #2a78d6;
+  --color-series-sortie: #eb6834;
+  --color-series-ajustement: #1baf7a;
+
+  /* Chart chrome */
+  --color-chart-surface: #fcfcfb;
+  --color-chart-plane: #f9f9f7;
+  --color-chart-ink: #0b0b0b;
+  --color-chart-ink-secondary: #52514e;
+  --color-chart-muted: #898781;
+  --color-chart-grid: #e1e0d9;
+  --color-chart-baseline: #c3c2b7;
 }
 
 @theme inline {
@@ -10,17 +49,71 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-brand-50: var(--color-brand-50);
+  --color-brand-100: var(--color-brand-100);
+  --color-brand-200: var(--color-brand-200);
+  --color-brand-300: var(--color-brand-300);
+  --color-brand-400: var(--color-brand-400);
+  --color-brand-500: var(--color-brand-500);
+  --color-brand-600: var(--color-brand-600);
+  --color-brand-700: var(--color-brand-700);
+  --color-brand-800: var(--color-brand-800);
+  --color-brand-900: var(--color-brand-900);
+
+  --color-navy-950: var(--color-navy-950);
+  --color-navy-900: var(--color-navy-900);
+  --color-navy-800: var(--color-navy-800);
+  --color-navy-700: var(--color-navy-700);
+  --color-navy-400: var(--color-navy-400);
+  --color-navy-200: var(--color-navy-200);
+
+  --color-good: var(--color-good);
+  --color-warning: var(--color-warning);
+  --color-critical: var(--color-critical);
+
+  --color-series-entree: var(--color-series-entree);
+  --color-series-sortie: var(--color-series-sortie);
+  --color-series-ajustement: var(--color-series-ajustement);
+
+  --color-chart-surface: var(--color-chart-surface);
+  --color-chart-plane: var(--color-chart-plane);
+  --color-chart-ink: var(--color-chart-ink);
+  --color-chart-ink-secondary: var(--color-chart-ink-secondary);
+  --color-chart-muted: var(--color-chart-muted);
+  --color-chart-grid: var(--color-chart-grid);
+  --color-chart-baseline: var(--color-chart-baseline);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0d0d0d;
+    --foreground: #ffffff;
+
+    --color-brand-500: #3987e5;
+    --color-brand-600: #3987e5;
+
+    --color-series-entree: #3987e5;
+    --color-series-sortie: #d95926;
+    --color-series-ajustement: #199e70;
+
+    --color-chart-surface: #1a1a19;
+    --color-chart-plane: #0d0d0d;
+    --color-chart-ink: #ffffff;
+    --color-chart-ink-secondary: #c3c2b7;
+    --color-chart-muted: #898781;
+    --color-chart-grid: #2c2c2a;
+    --color-chart-baseline: #383835;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-variant-numeric: proportional-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

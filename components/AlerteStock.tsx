@@ -1,15 +1,19 @@
+import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { statutStock } from "@/lib/stock";
 import type { Produit } from "@/lib/types";
 
-export function statutStock(produit: Pick<Produit, "quantite" | "seuil_alerte">) {
-  if (produit.quantite <= 0) return "rupture" as const;
-  if (produit.quantite <= produit.seuil_alerte) return "alerte" as const;
-  return "ok" as const;
-}
+export { statutStock };
 
 const STYLES = {
-  rupture: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-  alerte: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  ok: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  rupture: "bg-critical/10 text-critical",
+  alerte: "bg-warning/15 text-[#8a5a00] dark:text-warning",
+  ok: "bg-good/10 text-good",
+};
+
+const ICONES = {
+  rupture: XCircle,
+  alerte: AlertTriangle,
+  ok: CheckCircle2,
 };
 
 const LIBELLES = {
@@ -24,10 +28,12 @@ export default function AlerteStock({
   produit: Pick<Produit, "quantite" | "seuil_alerte">;
 }) {
   const statut = statutStock(produit);
+  const Icone = ICONES[statut];
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STYLES[statut]}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${STYLES[statut]}`}
     >
+      <Icone className="h-3.5 w-3.5" strokeWidth={2.25} />
       {LIBELLES[statut]}
     </span>
   );

@@ -20,6 +20,9 @@ const TYPES: { valeur: TypeMouvement; libelle: string; aide: string }[] = [
   },
 ];
 
+const champClasse =
+  "mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-zinc-700 dark:bg-zinc-950";
+
 export default function MouvementForm({ produits, onEnregistre }: Props) {
   const { session } = useAuth();
   const [produitId, setProduitId] = useState("");
@@ -57,15 +60,15 @@ export default function MouvementForm({ produits, onEnregistre }: Props) {
   return (
     <form
       onSubmit={gererSoumission}
-      className="grid grid-cols-1 gap-3 rounded-lg border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4 dark:border-zinc-800 dark:bg-zinc-900"
+      className="grid grid-cols-1 gap-3 rounded-xl border border-zinc-200 bg-chart-surface p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4 dark:border-zinc-800"
     >
       <div className="lg:col-span-2">
-        <label className="block text-sm font-medium">Produit *</label>
+        <label className="block text-sm font-medium text-chart-ink">Produit *</label>
         <select
           required
           value={produitId}
           onChange={(e) => setProduitId(e.target.value)}
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          className={champClasse}
         >
           <option value="" disabled>
             Sélectionner un produit
@@ -79,11 +82,11 @@ export default function MouvementForm({ produits, onEnregistre }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Type *</label>
+        <label className="block text-sm font-medium text-chart-ink">Type *</label>
         <select
           value={type}
           onChange={(e) => setType(e.target.value as TypeMouvement)}
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          className={champClasse}
         >
           {TYPES.map((t) => (
             <option key={t.valeur} value={t.valeur}>
@@ -91,44 +94,42 @@ export default function MouvementForm({ produits, onEnregistre }: Props) {
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-xs text-chart-muted">
           {TYPES.find((t) => t.valeur === type)?.aide}
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Quantité *</label>
+        <label className="block text-sm font-medium text-chart-ink">Quantité *</label>
         <input
           type="number"
           min="0"
           required
           value={quantite}
           onChange={(e) => setQuantite(e.target.value)}
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          className={champClasse}
         />
       </div>
 
       <div className="lg:col-span-3">
-        <label className="block text-sm font-medium">Note (optionnel)</label>
+        <label className="block text-sm font-medium text-chart-ink">Note (optionnel)</label>
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Ex : livraison fournisseur, vente comptoir, inventaire…"
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          className={champClasse}
         />
       </div>
 
       {erreur && (
-        <p className="col-span-full rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-          {erreur}
-        </p>
+        <p className="col-span-full rounded-md bg-critical/10 px-3 py-2 text-sm text-critical">{erreur}</p>
       )}
 
       <div className="col-span-full">
         <button
           type="submit"
           disabled={enregistrement || !produitId}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {enregistrement ? "Enregistrement…" : "Enregistrer le mouvement"}
         </button>
