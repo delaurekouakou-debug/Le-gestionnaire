@@ -4,6 +4,10 @@
 -- Isolation des données : chaque ligne métier porte un entreprise_id, et les
 -- policies RLS s'appuient sur la fonction current_entreprise_id() ci-dessous
 -- (SECURITY DEFINER) pour éviter la récursion RLS sur la table utilisateurs.
+--
+-- Création d'entreprise protégée par un code maître : voir
+-- configuration_globale / verifier_code_maitre() / creer_entreprise_admin()
+-- plus bas, et app/creer-entreprise/page.tsx côté front.
 
 create extension if not exists "pgcrypto";
 
@@ -55,6 +59,19 @@ create table mouvements (
 
 create index mouvements_produit_id_idx on mouvements (produit_id);
 create index mouvements_date_idx on mouvements (date desc);
+
+-- Code maître qui protège la création d'une nouvelle entreprise (voir
+-- creer_entreprise_admin() ci-dessous). RLS est activée SANS AUCUNE POLICY :
+-- ni "anon" ni "authenticated" ne peuvent lire/écrire cette table via
+-- l'API, quel que soit le code source rendu public — seules les fonctions
+-- SECURITY DEFINER y accèdent. Définir le code après ce script avec :
+--   insert into configuration_globale (id, code_maitre_hash)
+--     values (true, crypt('votre-code-secret', gen_salt('bf')));
+create table configuration_globale (
+  id boolean primary key default true check (id),
+  code_maitre_hash text not null
+);
+alter table configuration_globale enable row level security;
 
 -- ---------------------------------------------------------------------------
 -- Fonctions utilitaires (SECURITY DEFINER pour éviter la récursion RLS)
@@ -116,6 +133,53 @@ create trigger trg_appliquer_mouvement
   after insert on mouvements
   for each row execute function public.appliquer_mouvement();
 
+create or replace function public.verifier_code_maitre(code text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  hash_stocke text;
+begin
+  select code_maitre_hash into hash_stocke from configuration_globale where id = true;
+  if hash_stocke is null then
+    return false;
+  end if;
+  return hash_stocke = crypt(code, hash_stocke);
+end;
+$$;
+
+-- Seul point d'entrée pour créer une entreprise : revalide le code maître
+-- côté serveur (même si l'interface l'a déjà vérifié), donc un appel direct
+-- à cette fonction sans passer par /creer-entreprise ne peut pas le
+-- contourner. Il n'existe volontairement aucune policy RLS "insert" sur
+-- entreprises — seule cette fonction (SECURITY DEFINER) peut y insérer.
+create or replace function public.creer_entreprise_admin(nom_entreprise text, code_maitre text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nouvelle_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentification requise';
+  end if;
+  if not public.verifier_code_maitre(code_maitre) then
+    raise exception 'Code maître invalide';
+  end if;
+
+  insert into entreprises (nom) values (nom_entreprise) returning id into nouvelle_id;
+  return nouvelle_id;
+end;
+$$;
+
+revoke all on configuration_globale from anon, authenticated;
+grant execute on function public.verifier_code_maitre(text) to anon, authenticated;
+grant execute on function public.creer_entreprise_admin(text, text) to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
@@ -125,14 +189,11 @@ alter table utilisateurs enable row level security;
 alter table produits enable row level security;
 alter table mouvements enable row level security;
 
--- entreprises : visible uniquement par ses membres, créable par tout
--- utilisateur authentifié (étape 1 de l'inscription "créer une entreprise"),
--- modifiable par un admin de l'entreprise.
+-- entreprises : visible uniquement par ses membres, modifiable par un admin
+-- de l'entreprise. Pas de policy "insert" : la création passe exclusivement
+-- par creer_entreprise_admin() (protégée par le code maître) ci-dessus.
 create policy "select_entreprise" on entreprises
   for select using (id = current_entreprise_id());
-
-create policy "insert_entreprise" on entreprises
-  for insert with check (auth.uid() is not null);
 
 create policy "update_entreprise" on entreprises
   for update using (id = current_entreprise_id() and current_utilisateur_role() = 'admin');

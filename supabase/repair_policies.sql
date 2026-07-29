@@ -7,6 +7,17 @@
 -- Sûr à relancer plusieurs fois : ne touche ni aux tables ni aux données,
 -- recrée seulement les fonctions, le trigger et les policies.
 
+create extension if not exists "pgcrypto";
+
+-- Table du code maître (création d'entreprise protégée) : créée seulement
+-- si absente, jamais modifiée par ce script — voir schema.sql pour définir
+-- le code avec crypt(...).
+create table if not exists configuration_globale (
+  id boolean primary key default true check (id),
+  code_maitre_hash text not null
+);
+alter table configuration_globale enable row level security;
+
 -- Fonctions utilitaires
 create or replace function public.current_entreprise_id()
 returns uuid
@@ -57,20 +68,61 @@ create trigger trg_appliquer_mouvement
   after insert on mouvements
   for each row execute function public.appliquer_mouvement();
 
+create or replace function public.verifier_code_maitre(code text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  hash_stocke text;
+begin
+  select code_maitre_hash into hash_stocke from configuration_globale where id = true;
+  if hash_stocke is null then
+    return false;
+  end if;
+  return hash_stocke = crypt(code, hash_stocke);
+end;
+$$;
+
+create or replace function public.creer_entreprise_admin(nom_entreprise text, code_maitre text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nouvelle_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentification requise';
+  end if;
+  if not public.verifier_code_maitre(code_maitre) then
+    raise exception 'Code maître invalide';
+  end if;
+
+  insert into entreprises (nom) values (nom_entreprise) returning id into nouvelle_id;
+  return nouvelle_id;
+end;
+$$;
+
+revoke all on configuration_globale from anon, authenticated;
+grant execute on function public.verifier_code_maitre(text) to anon, authenticated;
+grant execute on function public.creer_entreprise_admin(text, text) to authenticated;
+
 -- RLS activée sur toutes les tables
 alter table entreprises enable row level security;
 alter table utilisateurs enable row level security;
 alter table produits enable row level security;
 alter table mouvements enable row level security;
 
--- entreprises
+-- entreprises : pas de policy "insert" — la création passe exclusivement
+-- par creer_entreprise_admin() (protégée par le code maître) ci-dessus.
+drop policy if exists "insert_entreprise" on entreprises;
+
 drop policy if exists "select_entreprise" on entreprises;
 create policy "select_entreprise" on entreprises
   for select using (id = current_entreprise_id());
-
-drop policy if exists "insert_entreprise" on entreprises;
-create policy "insert_entreprise" on entreprises
-  for insert with check (auth.uid() is not null);
 
 drop policy if exists "update_entreprise" on entreprises;
 create policy "update_entreprise" on entreprises
@@ -128,3 +180,11 @@ create policy "insert_mouvements" on mouvements
         and p.entreprise_id = current_entreprise_id()
     )
   );
+
+-- ---------------------------------------------------------------------------
+-- Définir ou changer votre code maître (à exécuter séparément) :
+-- ---------------------------------------------------------------------------
+--
+-- insert into configuration_globale (id, code_maitre_hash)
+--   values (true, crypt('votre-code-secret', gen_salt('bf')))
+--   on conflict (id) do update set code_maitre_hash = excluded.code_maitre_hash;

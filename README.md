@@ -44,6 +44,35 @@ policy`), rejouez [`supabase/repair_policies.sql`](./supabase/repair_policies.sq
 toucher aux tables ni aux données, et peut être relancé sans risque autant
 de fois que nécessaire.
 
+Définir ensuite votre **code maître** (voir section suivante), sans quoi
+personne — vous y compris — ne peut créer d'entreprise :
+
+```sql
+insert into configuration_globale (id, code_maitre_hash)
+  values (true, crypt('votre-code-secret', gen_salt('bf')))
+  on conflict (id) do update set code_maitre_hash = excluded.code_maitre_hash;
+```
+
+Remplacez `votre-code-secret` par le code de votre choix, et changez-le en
+relançant la même requête avec un nouveau code quand vous le souhaitez.
+
+### Création d'entreprise protégée par un code maître
+
+Il n'y a **aucun formulaire public** pour créer une entreprise : la seule
+façon d'en créer une est de connaître le code maître ci-dessus, saisi sur la
+page cachée **`/creer-entreprise`** (non liée depuis le reste du site — il
+faut connaître l'adresse). Le code n'apparaît jamais dans le dépôt Git ni
+dans le JavaScript envoyé au navigateur : il est stocké (hashé, via
+`pgcrypto`) dans Supabase et vérifié côté serveur par la fonction
+`verifier_code_maitre()`, dans une table (`configuration_globale`) sans
+aucune policy RLS — inaccessible en lecture/écriture via l'API, quel que
+soit qui a accès au code source de l'application.
+
+Une fois l'entreprise créée, son administrateur gère ensuite ses employés
+depuis `/parametres` : il y récupère le **code entreprise** à transmettre,
+que chaque employé utilise sur l'onglet **Rejoindre** de `/login` pour créer
+son propre compte (rôle employé, accès limité).
+
 ### 3. Configurer les variables d'environnement
 
 Copier `.env.local.example` vers `.env.local` et renseigner les valeurs du
@@ -64,19 +93,18 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=votre_cle_anon
 npm run dev
 ```
 
-### 5. Créer un compte
+### 5. Créer la première entreprise
 
-Sur `/login`, utiliser l'onglet **Créer une entreprise** pour créer le
-premier compte administrateur. Depuis `/parametres`, l'administrateur peut
-ensuite partager le **code entreprise** avec ses employés, qui l'utilisent
-sur l'onglet **Rejoindre** pour créer leur propre compte (rôle employé,
-accès limité).
+Rendez-vous sur `/creer-entreprise` (voir "Création d'entreprise protégée
+par un code maître" ci-dessus) avec le code maître défini à l'étape 2. Les
+connexions suivantes se font sur `/login`.
 
 ## Structure du projet
 
 ```
 app/
-├── login/page.tsx                 Connexion / création d'entreprise / rejoindre
+├── login/page.tsx                 Connexion / rejoindre une entreprise existante
+├── creer-entreprise/page.tsx      Page cachée, verrouillée par le code maître
 └── (app)/                         Routes protégées (redirection vers /login si déconnecté)
     ├── dashboard/page.tsx         Valeur du stock, alertes, derniers mouvements
     ├── produits/page.tsx          Liste, ajout, recherche/filtre, export PDF/Excel
@@ -85,6 +113,7 @@ app/
 lib/
 ├── supabaseClient.ts              Client Supabase (navigateur)
 ├── AuthContext.tsx                Session + profil (entreprise, rôle)
+├── authFlows.ts                   Inscription/connexion partagées (login + creer-entreprise)
 ├── export.ts                      Export du stock en PDF (jsPDF) et Excel (exceljs)
 └── types.ts                       Types partagés
 components/
@@ -93,7 +122,8 @@ components/
 ├── AlerteStock.tsx
 └── Navbar.tsx
 supabase/
-└── schema.sql                     Schéma, trigger de stock, policies RLS
+├── schema.sql                     Schéma, trigger de stock, policies RLS, code maître
+└── repair_policies.sql            Réparation idempotente (fonctions/trigger/policies)
 ```
 
 ## Déploiement

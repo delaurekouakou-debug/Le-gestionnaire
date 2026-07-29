@@ -3,77 +3,11 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Boxes, ClipboardList, ShieldCheck, TrendingUp } from "lucide-react";
-import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
+import { MESSAGE_PROFIL_MANQUANT, messageErreurConnexion, obtenirCompte } from "@/lib/authFlows";
 
-type Mode = "connexion" | "creer" | "rejoindre";
-
-function messageErreurConnexion(message: string | undefined): string {
-  if (!message) return "Identifiants invalides. Vérifiez votre email et mot de passe.";
-  if (message.toLowerCase().includes("email not confirmed")) {
-    return "Cet email n'a pas encore été confirmé. Vérifiez votre boîte de réception (et les spams) pour le lien de confirmation envoyé par Supabase.";
-  }
-  if (message.toLowerCase().includes("invalid login credentials")) {
-    return "Identifiants invalides. Vérifiez votre email et mot de passe.";
-  }
-  return message;
-}
-
-function messageErreurInscription(message: string | undefined): string {
-  if (!message) return "Impossible de créer le compte.";
-  if (message.toLowerCase().includes("email rate limit exceeded")) {
-    return "Trop de tentatives d'inscription en peu de temps : Supabase limite l'envoi d'emails de confirmation sur le plan gratuit. Réessayez dans quelques minutes, ou désactivez « Confirm email » dans Authentication → Providers → Email sur le dashboard Supabase pour ne plus en dépendre.";
-  }
-  if (message.toLowerCase().includes("user already registered")) {
-    return "Un compte existe déjà avec cet email. Utilisez plutôt l'onglet « Connexion », ou réinitialisez le mot de passe si besoin.";
-  }
-  return message;
-}
-
-type ResultatCompte =
-  | { type: "ok"; session: Session; userId: string }
-  | { type: "confirmation_requise" }
-  | { type: "erreur"; message: string };
-
-// Crée le compte, ou — s'il existe déjà (ex : une précédente tentative de
-// "Créer une entreprise"/"Rejoindre" a été interrompue après le signUp mais
-// avant la création du profil) — se connecte directement avec les mêmes
-// identifiants pour reprendre l'inscription là où elle s'était arrêtée.
-// Sans ça, un compte dans cet état bloquait l'utilisateur entre "Créer une
-// entreprise" (rejeté : déjà enregistré) et "Connexion" (renvoyé : pas de
-// profil), sans issue.
-async function obtenirCompte(email: string, motDePasse: string): Promise<ResultatCompte> {
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password: motDePasse,
-  });
-
-  if (authError?.message?.toLowerCase().includes("user already registered")) {
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password: motDePasse,
-    });
-    if (signInError || !signInData.session || !signInData.user) {
-      return {
-        type: "erreur",
-        message:
-          "Un compte existe déjà avec cet email, mais le mot de passe saisi ne correspond pas à celui utilisé précédemment. Utilisez l'onglet « Connexion » avec le bon mot de passe, ou contactez votre administrateur.",
-      };
-    }
-    return { type: "ok", session: signInData.session, userId: signInData.user.id };
-  }
-
-  if (authError || !authData.user) {
-    return { type: "erreur", message: messageErreurInscription(authError?.message) };
-  }
-
-  if (!authData.session) {
-    return { type: "confirmation_requise" };
-  }
-
-  return { type: "ok", session: authData.session, userId: authData.user.id };
-}
+type Mode = "connexion" | "rejoindre";
 
 export default function LoginPage() {
   return (
@@ -82,9 +16,6 @@ export default function LoginPage() {
     </Suspense>
   );
 }
-
-const MESSAGE_PROFIL_MANQUANT =
-  "Ce compte existe mais n'est associé à aucune entreprise (une inscription précédente a probablement été interrompue avant la fin). Recommencez avec « Créer une entreprise » ou « Rejoindre », ou contactez votre administrateur.";
 
 function LoginPageInterne() {
   const router = useRouter();
@@ -95,7 +26,6 @@ function LoginPageInterne() {
   const [email, setEmail] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
   const [nom, setNom] = useState("");
-  const [nomEntreprise, setNomEntreprise] = useState("");
   const [codeEntreprise, setCodeEntreprise] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(
@@ -136,75 +66,6 @@ function LoginPageInterne() {
     if (!profilCharge) {
       await supabase.auth.signOut();
       setInfo(MESSAGE_PROFIL_MANQUANT);
-      return;
-    }
-
-    allerAuTableauDeBord();
-  };
-
-  const gererCreationEntreprise = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErreur(null);
-    setInfo(null);
-    setChargement(true);
-
-    const resultat = await obtenirCompte(email, motDePasse);
-
-    if (resultat.type === "erreur") {
-      setChargement(false);
-      setErreur(resultat.message);
-      return;
-    }
-    if (resultat.type === "confirmation_requise") {
-      setChargement(false);
-      setInfo(
-        "Compte créé. Ce projet Supabase exige une confirmation par email : vérifiez votre boîte de réception, cliquez sur le lien reçu, puis revenez sur « Créer une entreprise » avec les mêmes identifiants pour terminer l'inscription."
-      );
-      return;
-    }
-
-    const { session, userId } = resultat;
-
-    // Le compte pouvait déjà avoir un profil (ex : la création avait en fait
-    // abouti lors d'une tentative précédente malgré une coupure juste après)
-    // — dans ce cas on se contente de se connecter, sans recréer d'entreprise.
-    const profilExistant = await appliquerSession(session);
-    if (profilExistant) {
-      setChargement(false);
-      allerAuTableauDeBord();
-      return;
-    }
-
-    const { data: entreprise, error: entrepriseError } = await supabase
-      .from("entreprises")
-      .insert({ nom: nomEntreprise })
-      .select()
-      .single();
-    if (entrepriseError || !entreprise) {
-      setChargement(false);
-      setErreur(
-        "Compte prêt mais impossible de créer l'entreprise : " +
-          (entrepriseError?.message ?? "erreur inconnue")
-      );
-      return;
-    }
-
-    const { error: profilError } = await supabase.from("utilisateurs").insert({
-      id: userId,
-      entreprise_id: entreprise.id,
-      nom,
-      role: "admin",
-    });
-    if (profilError) {
-      setChargement(false);
-      setErreur("Impossible de créer le profil : " + profilError.message);
-      return;
-    }
-
-    const profilCharge = await appliquerSession(session);
-    setChargement(false);
-    if (!profilCharge) {
-      setErreur("Le profil vient d'être créé mais n'a pas pu être chargé. Réessayez de vous connecter.");
       return;
     }
 
@@ -266,12 +127,7 @@ function LoginPageInterne() {
     allerAuTableauDeBord();
   };
 
-  const gererSoumission =
-    mode === "connexion"
-      ? gererConnexion
-      : mode === "creer"
-        ? gererCreationEntreprise
-        : gererRejoindre;
+  const gererSoumission = mode === "connexion" ? gererConnexion : gererRejoindre;
 
   const champClasse =
     "mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-zinc-700 dark:bg-zinc-900";
@@ -341,8 +197,7 @@ function LoginPageInterne() {
             {(
               [
                 ["connexion", "Connexion"],
-                ["creer", "Créer une entreprise"],
-                ["rejoindre", "Rejoindre"],
+                ["rejoindre", "Rejoindre une entreprise"],
               ] as [Mode, string][]
             ).map(([valeur, libelle]) => (
               <button
@@ -365,46 +220,30 @@ function LoginPageInterne() {
           </div>
 
           <form onSubmit={gererSoumission} className="space-y-4">
-            {mode !== "connexion" && (
-              <div>
-                <label className="block text-sm font-medium text-chart-ink">Votre nom</label>
-                <input
-                  type="text"
-                  required
-                  value={nom}
-                  onChange={(e) => setNom(e.target.value)}
-                  className={champClasse}
-                />
-              </div>
-            )}
-
-            {mode === "creer" && (
-              <div>
-                <label className="block text-sm font-medium text-chart-ink">
-                  Nom de l&apos;entreprise
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={nomEntreprise}
-                  onChange={(e) => setNomEntreprise(e.target.value)}
-                  className={champClasse}
-                />
-              </div>
-            )}
-
             {mode === "rejoindre" && (
-              <div>
-                <label className="block text-sm font-medium text-chart-ink">Code entreprise</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Fourni par votre administrateur"
-                  value={codeEntreprise}
-                  onChange={(e) => setCodeEntreprise(e.target.value)}
-                  className={champClasse}
-                />
-              </div>
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-chart-ink">Votre nom</label>
+                  <input
+                    type="text"
+                    required
+                    value={nom}
+                    onChange={(e) => setNom(e.target.value)}
+                    className={champClasse}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-chart-ink">Code entreprise</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Fourni par votre administrateur"
+                    value={codeEntreprise}
+                    onChange={(e) => setCodeEntreprise(e.target.value)}
+                    className={champClasse}
+                  />
+                </div>
+              </>
             )}
 
             <div>
@@ -443,9 +282,7 @@ function LoginPageInterne() {
                 ? "Veuillez patienter…"
                 : mode === "connexion"
                   ? "Se connecter"
-                  : mode === "creer"
-                    ? "Créer l'entreprise"
-                    : "Rejoindre l'entreprise"}
+                  : "Rejoindre l'entreprise"}
             </button>
           </form>
         </div>
