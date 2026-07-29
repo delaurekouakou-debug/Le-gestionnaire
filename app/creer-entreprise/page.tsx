@@ -32,7 +32,15 @@ export default function CreerEntreprisePage() {
     const { data, error } = await supabase.rpc("verifier_code_maitre", { code: codeMaitre });
 
     setChargement(false);
-    if (error || data !== true) {
+    if (error) {
+      setErreur(
+        "Erreur technique lors de la vérification du code : " +
+          error.message +
+          ". Vérifiez que supabase/repair_policies.sql a bien été exécuté sans erreur."
+      );
+      return;
+    }
+    if (data !== true) {
       setErreur("Code invalide.");
       return;
     }
