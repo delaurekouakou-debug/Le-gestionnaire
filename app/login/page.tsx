@@ -6,6 +6,7 @@ import { Boxes, ClipboardList, ShieldCheck, TrendingUp } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { MESSAGE_PROFIL_MANQUANT, identifiantVersEmail, messageErreurConnexion } from "@/lib/authFlows";
+import ChampMotDePasse from "@/components/ChampMotDePasse";
 
 export default function LoginPage() {
   return (
@@ -20,13 +21,20 @@ function LoginPageInterne() {
   const searchParams = useSearchParams();
   const { appliquerSession } = useAuth();
 
+  const [modeRecuperation, setModeRecuperation] = useState(false);
   const [identifiant, setIdentifiant] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
-  const [info] = useState<string | null>(
+  const [info, setInfo] = useState<string | null>(
     searchParams.get("raison") === "profil_manquant" ? MESSAGE_PROFIL_MANQUANT : null
   );
   const [chargement, setChargement] = useState(false);
+
+  const basculerRecuperation = (valeur: boolean) => {
+    setModeRecuperation(valeur);
+    setErreur(null);
+    setInfo(null);
+  };
 
   const gererConnexion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +68,30 @@ function LoginPageInterne() {
     // une navigation fantôme qui ramenait sur /login juste après l'arrivée
     // sur /dashboard.
     router.push("/dashboard/");
+  };
+
+  const gererRecuperation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErreur(null);
+    setInfo(null);
+    setChargement(true);
+
+    // La redirection est calculée à partir de l'URL courante plutôt que
+    // codée en dur, pour fonctionner aussi bien en local (basePath vide)
+    // que sur GitHub Pages (basePath /Le-gestionnaire).
+    const racine = window.location.origin + window.location.pathname.replace(/\/login\/?$/, "");
+    await supabase.auth.resetPasswordForEmail(identifiantVersEmail(identifiant), {
+      redirectTo: `${racine}/reinitialiser-mot-de-passe/`,
+    });
+
+    setChargement(false);
+    // Message volontairement identique que le compte existe ou non (et
+    // qu'il s'agisse d'une vraie adresse email ou d'un compte créé sans
+    // email par un administrateur) : ça évite de révéler quels identifiants
+    // sont valides.
+    setInfo(
+      "Si ce compte dispose d'une adresse email valide, un lien de réinitialisation vient de lui être envoyé. Si votre compte a été créé par un administrateur avec un simple identifiant (sans email), demandez-lui de vous en définir un nouveau depuis Paramètres."
+    );
   };
 
   const champClasse =
@@ -116,8 +148,14 @@ function LoginPageInterne() {
           </div>
 
           <div className="hidden lg:block">
-            <h2 className="text-xl font-bold text-chart-ink">Bienvenue</h2>
-            <p className="mt-1 text-sm text-chart-muted">Connectez-vous à votre espace</p>
+            <h2 className="text-xl font-bold text-chart-ink">
+              {modeRecuperation ? "Mot de passe oublié" : "Bienvenue"}
+            </h2>
+            <p className="mt-1 text-sm text-chart-muted">
+              {modeRecuperation
+                ? "Recevez un lien pour définir un nouveau mot de passe"
+                : "Connectez-vous à votre espace"}
+            </p>
           </div>
 
           {info && (
@@ -126,49 +164,93 @@ function LoginPageInterne() {
             </p>
           )}
 
-          <form onSubmit={gererConnexion} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-chart-ink">Identifiant</label>
-              <input
-                type="text"
-                required
-                autoFocus
-                autoComplete="username"
-                value={identifiant}
-                onChange={(e) => setIdentifiant(e.target.value)}
-                className={champClasse}
-              />
-            </div>
+          {!modeRecuperation ? (
+            <form onSubmit={gererConnexion} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-chart-ink">Identifiant</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  autoComplete="username"
+                  value={identifiant}
+                  onChange={(e) => setIdentifiant(e.target.value)}
+                  className={champClasse}
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-chart-ink">Mot de passe</label>
-              <input
-                type="password"
-                required
-                autoComplete="current-password"
-                value={motDePasse}
-                onChange={(e) => setMotDePasse(e.target.value)}
-                className={champClasse}
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-chart-ink">Mot de passe</label>
+                <ChampMotDePasse
+                  required
+                  autoComplete="current-password"
+                  value={motDePasse}
+                  onChange={(e) => setMotDePasse(e.target.value)}
+                  className={champClasse}
+                />
+              </div>
 
-            {erreur && (
-              <p className="rounded-md bg-critical/10 px-3 py-2 text-sm text-critical">{erreur}</p>
-            )}
+              {erreur && (
+                <p className="rounded-md bg-critical/10 px-3 py-2 text-sm text-critical">{erreur}</p>
+              )}
 
-            <button
-              type="submit"
-              disabled={chargement}
-              className="w-full rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
-            >
-              {chargement ? "Connexion…" : "Se connecter"}
-            </button>
+              <button
+                type="submit"
+                disabled={chargement}
+                className="w-full rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
+              >
+                {chargement ? "Connexion…" : "Se connecter"}
+              </button>
 
-            <p className="text-center text-xs text-chart-muted">
-              Pas encore de compte ? Votre administrateur peut en créer un pour vous
-              depuis les paramètres de l&apos;entreprise.
-            </p>
-          </form>
+              <button
+                type="button"
+                onClick={() => basculerRecuperation(true)}
+                className="w-full text-center text-xs text-chart-muted hover:text-brand-600 hover:underline"
+              >
+                Mot de passe oublié ?
+              </button>
+
+              <p className="text-center text-xs text-chart-muted">
+                Pas encore de compte ? Votre administrateur peut en créer un pour vous
+                depuis les paramètres de l&apos;entreprise.
+              </p>
+            </form>
+          ) : (
+            <form onSubmit={gererRecuperation} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-chart-ink">Identifiant</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  autoComplete="username"
+                  value={identifiant}
+                  onChange={(e) => setIdentifiant(e.target.value)}
+                  className={champClasse}
+                />
+              </div>
+
+              {erreur && (
+                <p className="rounded-md bg-critical/10 px-3 py-2 text-sm text-critical">{erreur}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={chargement}
+                className="w-full rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
+              >
+                {chargement ? "Envoi…" : "Envoyer le lien de réinitialisation"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => basculerRecuperation(false)}
+                className="w-full text-center text-xs text-chart-muted hover:text-brand-600 hover:underline"
+              >
+                Retour à la connexion
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>

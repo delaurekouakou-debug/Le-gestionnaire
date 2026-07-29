@@ -6,6 +6,7 @@ import { Boxes, KeyRound } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { obtenirCompte } from "@/lib/authFlows";
+import ChampMotDePasse from "@/components/ChampMotDePasse";
 
 const champClasse =
   "mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-zinc-700 dark:bg-zinc-900";
@@ -137,13 +138,12 @@ export default function CreerEntreprisePage() {
                   className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-chart-muted"
                   strokeWidth={2}
                 />
-                <input
-                  type="password"
+                <ChampMotDePasse
                   required
                   autoFocus
                   value={codeMaitre}
                   onChange={(e) => setCodeMaitre(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-zinc-700 dark:bg-zinc-900"
+                  className="w-full rounded-md border border-zinc-300 py-2 pl-9 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-zinc-700 dark:bg-zinc-900"
                 />
               </div>
             </div>
@@ -195,10 +195,10 @@ export default function CreerEntreprisePage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-chart-ink">Mot de passe</label>
-              <input
-                type="password"
+              <ChampMotDePasse
                 required
                 minLength={6}
+                autoComplete="new-password"
                 value={motDePasse}
                 onChange={(e) => setMotDePasse(e.target.value)}
                 className={champClasse}

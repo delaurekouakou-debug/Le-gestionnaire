@@ -82,6 +82,20 @@ Important : comme ces comptes n'utilisent pas de vraie adresse email
 Providers → Email), sans quoi les comptes créés restent bloqués en attente
 d'une confirmation qui ne peut jamais arriver.
 
+### Mot de passe oublié
+
+Le lien **« Mot de passe oublié ? »** sur `/login` envoie un email de
+réinitialisation via Supabase (`resetPasswordForEmail`) et renvoie sur
+`/reinitialiser-mot-de-passe` pour définir un nouveau mot de passe. Il ne
+fonctionne que pour les comptes ayant une **vraie adresse email** — c'est le
+cas du compte fondateur créé sur `/creer-entreprise` si un email valide y a
+été saisi comme identifiant. Pour un compte créé sans email par un
+administrateur (section « Ajouter un membre »), aucun email ne peut être
+délivré : cet administrateur doit lui redéfinir un mot de passe directement
+depuis le tableau de bord Supabase (Authentication → Users → sélectionner
+l'utilisateur → réinitialiser le mot de passe), les mots de passe n'étant
+jamais stockés en clair et donc jamais récupérables tels quels.
+
 ### 3. Configurer les variables d'environnement
 
 Copier `.env.local.example` vers `.env.local` et renseigner les valeurs du
@@ -112,8 +126,9 @@ connexions suivantes se font sur `/login`.
 
 ```
 app/
-├── login/page.tsx                 Connexion par identifiant + mot de passe
+├── login/page.tsx                 Connexion par identifiant + mot de passe, lien "oublié ?"
 ├── creer-entreprise/page.tsx      Page cachée, verrouillée par le code maître
+├── reinitialiser-mot-de-passe/    Définir un nouveau mot de passe (lien reçu par email)
 └── (app)/                         Routes protégées (redirection vers /login si déconnecté)
     ├── dashboard/page.tsx         Stats, graphique et activité — période et type filtrables
     ├── produits/page.tsx          Liste, ajout, recherche/filtre, export PDF/Excel

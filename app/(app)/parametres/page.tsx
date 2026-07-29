@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { creerCompteMembre } from "@/lib/authFlows";
 import { THEMES, useTheme } from "@/lib/ThemeContext";
+import ChampMotDePasse from "@/components/ChampMotDePasse";
 import type { Entreprise, Role, Utilisateur } from "@/lib/types";
 
 const champClasse =
@@ -173,8 +174,7 @@ function ParametresAdmin() {
           </div>
           <div>
             <label className="block text-sm font-medium text-chart-ink">Mot de passe</label>
-            <input
-              type="password"
+            <ChampMotDePasse
               required
               minLength={6}
               autoComplete="new-password"
@@ -312,8 +312,7 @@ function ParametresEmploye() {
         <form onSubmit={gererChangementMotDePasse} className="mt-4 max-w-sm space-y-4">
           <div>
             <label className="block text-sm font-medium text-chart-ink">Mot de passe actuel</label>
-            <input
-              type="password"
+            <ChampMotDePasse
               required
               autoComplete="current-password"
               value={motDePasseActuel}
@@ -323,8 +322,7 @@ function ParametresEmploye() {
           </div>
           <div>
             <label className="block text-sm font-medium text-chart-ink">Nouveau mot de passe</label>
-            <input
-              type="password"
+            <ChampMotDePasse
               required
               minLength={6}
               autoComplete="new-password"
@@ -335,8 +333,7 @@ function ParametresEmploye() {
           </div>
           <div>
             <label className="block text-sm font-medium text-chart-ink">Confirmer le nouveau mot de passe</label>
-            <input
-              type="password"
+            <ChampMotDePasse
               required
               minLength={6}
               autoComplete="new-password"
