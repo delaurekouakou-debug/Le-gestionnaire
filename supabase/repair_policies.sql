@@ -72,7 +72,9 @@ create or replace function public.verifier_code_maitre(code text)
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+-- "extensions" en plus de "public" : pgcrypto (crypt/gen_salt) s'installe
+-- par défaut dans le schéma "extensions" sur Supabase, pas "public".
+set search_path = public, extensions
 as $$
 declare
   hash_stocke text;
