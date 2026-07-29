@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Boxes, FileDown, PackageX, ArrowLeftRight, Sheet, TriangleAlert } from "lucide-react";
+import { Boxes, PackageX, ArrowLeftRight, TriangleAlert } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import type { MouvementAvecProduit, Produit, TypeMouvement } from "@/lib/types";
 import { statutStock } from "@/lib/stock";
-import { exporterMouvementsEnExcel, exporterMouvementsEnPdf } from "@/lib/export";
 import StatCard from "@/components/StatCard";
 import MouvementsBarChart, { type JourMouvements } from "@/components/charts/MouvementsBarChart";
 import RepartitionStockBar from "@/components/charts/RepartitionStockBar";
@@ -119,7 +118,6 @@ export default function DashboardPage() {
   }, [mouvementsPeriode, dateDebut, dateFin]);
 
   const mouvementsPeriodeTotal = jours.reduce((t, j) => t + j.entree + j.sortie, 0);
-  const periode = { debut: dateDebut, fin: dateFin, typeLibelle: LIBELLE_FILTRE[typeFiltre] };
 
   return (
     <div className="space-y-6">
@@ -164,25 +162,6 @@ export default function DashboardPage() {
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="ml-auto flex gap-2">
-            <button
-              onClick={() => exporterMouvementsEnPdf(mouvementsPeriode, periode)}
-              disabled={mouvementsPeriode.length === 0}
-              className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-chart-ink-secondary transition hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-            >
-              <FileDown className="h-4 w-4" strokeWidth={2} />
-              PDF
-            </button>
-            <button
-              onClick={() => exporterMouvementsEnExcel(mouvementsPeriode, periode)}
-              disabled={mouvementsPeriode.length === 0}
-              className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-chart-ink-secondary transition hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-            >
-              <Sheet className="h-4 w-4" strokeWidth={2} />
-              Excel
-            </button>
           </div>
         </div>
       </div>
