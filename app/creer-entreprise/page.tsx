@@ -18,7 +18,7 @@ export default function CreerEntreprisePage() {
   const [codeValide, setCodeValide] = useState(false);
   const [nom, setNom] = useState("");
   const [nomEntreprise, setNomEntreprise] = useState("");
-  const [email, setEmail] = useState("");
+  const [identifiant, setIdentifiant] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export default function CreerEntreprisePage() {
     setInfo(null);
     setChargement(true);
 
-    const resultat = await obtenirCompte(email, motDePasse);
+    const resultat = await obtenirCompte(identifiant, motDePasse);
 
     if (resultat.type === "erreur") {
       setChargement(false);
@@ -63,7 +63,7 @@ export default function CreerEntreprisePage() {
     if (resultat.type === "confirmation_requise") {
       setChargement(false);
       setInfo(
-        "Compte créé. Ce projet Supabase exige une confirmation par email : vérifiez votre boîte de réception, cliquez sur le lien reçu, puis revenez ici avec les mêmes identifiants pour terminer la création."
+        "Compte créé mais en attente de confirmation. Dans Supabase, désactivez « Confirm email » (Authentication → Providers → Email), puis revenez ici avec les mêmes identifiants pour terminer la création."
       );
       return;
     }
@@ -183,12 +183,13 @@ export default function CreerEntreprisePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-chart-ink">Email de l&apos;administrateur</label>
+              <label className="block text-sm font-medium text-chart-ink">Identifiant</label>
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
+                value={identifiant}
+                onChange={(e) => setIdentifiant(e.target.value)}
                 className={champClasse}
               />
             </div>

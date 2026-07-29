@@ -69,9 +69,18 @@ aucune policy RLS — inaccessible en lecture/écriture via l'API, quel que
 soit qui a accès au code source de l'application.
 
 Une fois l'entreprise créée, son administrateur gère ensuite ses employés
-depuis `/parametres` : il y récupère le **code entreprise** à transmettre,
-que chaque employé utilise sur l'onglet **Rejoindre** de `/login` pour créer
-son propre compte (rôle employé, accès limité).
+depuis `/parametres`, section **Ajouter un membre** : il y choisit un
+identifiant et un mot de passe pour chaque employé (aucun email requis). Le
+compte est utilisable immédiatement — c'est avec cet identifiant et ce mot
+de passe que l'employé se connecte sur `/login`. Il n'y a plus d'auto-
+inscription : seul un administrateur peut créer un compte pour un membre de
+son entreprise.
+
+Important : comme ces comptes n'utilisent pas de vraie adresse email
+(domaine technique interne `@membres.legestionnaire.local`), l'option
+**Confirm email** doit être désactivée dans Supabase (Authentication →
+Providers → Email), sans quoi les comptes créés restent bloqués en attente
+d'une confirmation qui ne peut jamais arriver.
 
 ### 3. Configurer les variables d'environnement
 
@@ -103,18 +112,20 @@ connexions suivantes se font sur `/login`.
 
 ```
 app/
-├── login/page.tsx                 Connexion / rejoindre une entreprise existante
+├── login/page.tsx                 Connexion par identifiant + mot de passe
 ├── creer-entreprise/page.tsx      Page cachée, verrouillée par le code maître
 └── (app)/                         Routes protégées (redirection vers /login si déconnecté)
-    ├── dashboard/page.tsx         Valeur du stock, alertes, derniers mouvements
+    ├── dashboard/page.tsx         Stats, graphique et activité — période et type filtrables
     ├── produits/page.tsx          Liste, ajout, recherche/filtre, export PDF/Excel
-    ├── mouvements/page.tsx        Saisie et historique des mouvements de stock
-    └── parametres/page.tsx        Entreprise, code d'invitation, gestion des rôles
+    ├── mouvements/page.tsx        Historique filtrable, rapports, bons de livraison
+    └── parametres/page.tsx        Admin : ajout de membres · Employé : mot de passe, thème
 lib/
-├── supabaseClient.ts              Client Supabase (navigateur)
+├── supabaseClient.ts              Client Supabase (navigateur, session persistée)
+├── supabaseAdminClient.ts         Client isolé (sans session) pour créer d'autres comptes
 ├── AuthContext.tsx                Session + profil (entreprise, rôle)
-├── authFlows.ts                   Inscription/connexion partagées (login + creer-entreprise)
-├── export.ts                      Export du stock en PDF (jsPDF) et Excel (exceljs)
+├── authFlows.ts                   Identifiant ↔ email synthétique, inscription/connexion
+├── ThemeContext.tsx                Thème choisi (clair, sombre, 3 thèmes épurés), persisté
+├── export.ts                      Export PDF/Excel (stock, mouvements) et bons de livraison
 └── types.ts                       Types partagés
 components/
 ├── ProduitForm.tsx

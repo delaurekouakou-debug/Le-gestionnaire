@@ -201,15 +201,18 @@ create policy "update_entreprise" on entreprises
   for update using (id = current_entreprise_id() and current_utilisateur_role() = 'admin');
 
 -- utilisateurs : visibles par les membres de la même entreprise. Un
--- utilisateur ne peut créer que sa propre ligne de profil (id = auth.uid()),
--- que ce soit en tant qu'admin (nouvelle entreprise) ou en tant qu'employé
--- (rejoint une entreprise existante via son entreprise_id, transmis par
--- l'administrateur comme "code d'invitation").
+-- utilisateur peut créer sa propre ligne de profil (id = auth.uid(), cas de
+-- l'admin fondateur créé par creer_entreprise_admin()), et un admin peut en
+-- créer pour d'autres membres de sa propre entreprise (ajout de membres
+-- identifiant/mot de passe depuis /parametres, sans email).
 create policy "select_utilisateurs" on utilisateurs
   for select using (entreprise_id = current_entreprise_id());
 
 create policy "insert_utilisateurs" on utilisateurs
-  for insert with check (id = auth.uid());
+  for insert with check (
+    id = auth.uid()
+    or (current_utilisateur_role() = 'admin' and entreprise_id = current_entreprise_id())
+  );
 
 create policy "update_utilisateurs" on utilisateurs
   for update using (

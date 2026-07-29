@@ -29,7 +29,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 async function recupererProfil(userId: string): Promise<Utilisateur | null> {
   const { data } = await supabase
     .from("utilisateurs")
-    .select("*")
+    .select("*, entreprise:entreprises(nom)")
     .eq("id", userId)
     .maybeSingle();
   return (data as Utilisateur | null) ?? null;

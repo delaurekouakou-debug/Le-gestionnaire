@@ -15,6 +15,7 @@ export interface Utilisateur {
   nom: string;
   role: Role;
   created_at: string;
+  entreprise?: Pick<Entreprise, "nom"> | null;
 }
 
 export interface Produit {

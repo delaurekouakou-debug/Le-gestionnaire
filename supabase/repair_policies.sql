@@ -137,7 +137,10 @@ create policy "select_utilisateurs" on utilisateurs
 
 drop policy if exists "insert_utilisateurs" on utilisateurs;
 create policy "insert_utilisateurs" on utilisateurs
-  for insert with check (id = auth.uid());
+  for insert with check (
+    id = auth.uid()
+    or (current_utilisateur_role() = 'admin' and entreprise_id = current_entreprise_id())
+  );
 
 drop policy if exists "update_utilisateurs" on utilisateurs;
 create policy "update_utilisateurs" on utilisateurs

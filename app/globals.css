@@ -85,8 +85,10 @@
   --color-chart-baseline: var(--color-chart-baseline);
 }
 
+/* Tant que l'attribut data-theme n'est pas encore posé par ThemeProvider
+   (flash avant hydratation), on suit la préférence système. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --background: #0d0d0d;
     --foreground: #ffffff;
 
@@ -105,6 +107,114 @@
     --color-chart-grid: #2c2c2a;
     --color-chart-baseline: #383835;
   }
+}
+
+/* Thème "sombre" — choix explicite (sélecteur dans Paramètres), toujours
+   actif quelle que soit la préférence système une fois choisi. */
+:root[data-theme="sombre"] {
+  --background: #0d0d0d;
+  --foreground: #ffffff;
+
+  --color-brand-500: #3987e5;
+  --color-brand-600: #3987e5;
+
+  --color-series-entree: #3987e5;
+  --color-series-sortie: #d95926;
+  --color-series-ajustement: #199e70;
+
+  --color-chart-surface: #1a1a19;
+  --color-chart-plane: #0d0d0d;
+  --color-chart-ink: #ffffff;
+  --color-chart-ink-secondary: #c3c2b7;
+  --color-chart-muted: #898781;
+  --color-chart-grid: #2c2c2a;
+  --color-chart-baseline: #383835;
+}
+
+/* Thèmes "épurés" — palettes claires et minimalistes, un seul accent,
+   couleurs de statut (good/warning/critical) volontairement inchangées. */
+:root[data-theme="epure-ardoise"] {
+  --background: #f5f6f8;
+  --foreground: #1c2430;
+
+  --color-brand-50: #eef1f5;
+  --color-brand-100: #d7dee7;
+  --color-brand-200: #b3c0d1;
+  --color-brand-300: #8a9db8;
+  --color-brand-400: #66809f;
+  --color-brand-500: #4c6789;
+  --color-brand-600: #3f5673;
+  --color-brand-700: #33475f;
+  --color-brand-800: #293a4d;
+  --color-brand-900: #1f2d3d;
+
+  --color-series-entree: #4c6789;
+  --color-series-sortie: #a8663f;
+  --color-series-ajustement: #3f8a7f;
+
+  --color-chart-surface: #fbfbfc;
+  --color-chart-plane: #f5f6f8;
+  --color-chart-ink: #1c2430;
+  --color-chart-ink-secondary: #4b5563;
+  --color-chart-muted: #8b93a0;
+  --color-chart-grid: #e3e6eb;
+  --color-chart-baseline: #cdd2da;
+}
+
+:root[data-theme="epure-sauge"] {
+  --background: #f6f7f2;
+  --foreground: #212a1e;
+
+  --color-brand-50: #eef2e8;
+  --color-brand-100: #dbe4cc;
+  --color-brand-200: #bccc9e;
+  --color-brand-300: #9bb473;
+  --color-brand-400: #7f9d55;
+  --color-brand-500: #6b8a44;
+  --color-brand-600: #5a7538;
+  --color-brand-700: #48602e;
+  --color-brand-800: #3a4d26;
+  --color-brand-900: #2d3c1e;
+
+  --color-series-entree: #6b8a44;
+  --color-series-sortie: #b3703f;
+  --color-series-ajustement: #3f8f8a;
+
+  --color-chart-surface: #fbfcf9;
+  --color-chart-plane: #f6f7f2;
+  --color-chart-ink: #212a1e;
+  --color-chart-ink-secondary: #52594a;
+  --color-chart-muted: #8b9080;
+  --color-chart-grid: #e4e6db;
+  --color-chart-baseline: #cfd3c1;
+}
+
+:root[data-theme="epure-sable"] {
+  --background: #faf6ee;
+  --foreground: #2b2318;
+
+  --color-brand-50: #faf1e0;
+  --color-brand-100: #f0dcb3;
+  --color-brand-200: #e3c07d;
+  --color-brand-300: #d5a34e;
+  --color-brand-400: #c68b34;
+  --color-brand-500: #b17a2c;
+  --color-brand-600: #976526;
+  --color-brand-700: #7c521f;
+  --color-brand-800: #63421a;
+  --color-brand-900: #4d3315;
+
+  --color-series-entree: #b17a2c;
+  --color-series-sortie: #b0563c;
+  --color-series-ajustement: #4f8f6f;
+
+  --color-chart-surface: #fdfbf6;
+  --color-chart-plane: #faf6ee;
+  --color-chart-ink: #2b2318;
+  --color-chart-ink-secondary: #5c5040;
+  --color-chart-muted: #928569;
+  --color-chart-grid: #ece4d3;
+  --color-chart-baseline: #ddd2b8;
 }
 
 body {

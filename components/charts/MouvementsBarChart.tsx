@@ -35,7 +35,7 @@ export default function MouvementsBarChart({ jours }: { jours: JourMouvements[] 
 
       {!aDesDonnees ? (
         <p className="flex h-40 items-center justify-center text-sm text-chart-muted">
-          Aucun mouvement sur les 7 derniers jours.
+          Aucun mouvement sur la période sélectionnée.
         </p>
       ) : (
         <div className="flex">

@@ -5,9 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Boxes, ClipboardList, ShieldCheck, TrendingUp } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
-import { MESSAGE_PROFIL_MANQUANT, messageErreurConnexion, obtenirCompte } from "@/lib/authFlows";
-
-type Mode = "connexion" | "rejoindre";
+import { MESSAGE_PROFIL_MANQUANT, identifiantVersEmail, messageErreurConnexion } from "@/lib/authFlows";
 
 export default function LoginPage() {
   return (
@@ -22,32 +20,20 @@ function LoginPageInterne() {
   const searchParams = useSearchParams();
   const { appliquerSession } = useAuth();
 
-  const [mode, setMode] = useState<Mode>("connexion");
-  const [email, setEmail] = useState("");
+  const [identifiant, setIdentifiant] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
-  const [nom, setNom] = useState("");
-  const [codeEntreprise, setCodeEntreprise] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(
+  const [info] = useState<string | null>(
     searchParams.get("raison") === "profil_manquant" ? MESSAGE_PROFIL_MANQUANT : null
   );
   const [chargement, setChargement] = useState(false);
 
-  const allerAuTableauDeBord = () => {
-    // Pas de router.refresh() ici : ce site est un export statique sans
-    // serveur, donc rien à "rafraîchir" côté serveur — cet appel provoquait
-    // une navigation fantôme qui ramenait sur /login juste après l'arrivée
-    // sur /dashboard.
-    router.push("/dashboard/");
-  };
-
   const gererConnexion = async (e: React.FormEvent) => {
     e.preventDefault();
     setErreur(null);
-    setInfo(null);
     setChargement(true);
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: identifiantVersEmail(identifiant),
       password: motDePasse,
     });
     if (error) {
@@ -65,69 +51,16 @@ function LoginPageInterne() {
 
     if (!profilCharge) {
       await supabase.auth.signOut();
-      setInfo(MESSAGE_PROFIL_MANQUANT);
+      setErreur(MESSAGE_PROFIL_MANQUANT);
       return;
     }
 
-    allerAuTableauDeBord();
+    // Pas de router.refresh() ici : ce site est un export statique sans
+    // serveur, donc rien à "rafraîchir" côté serveur — cet appel provoquait
+    // une navigation fantôme qui ramenait sur /login juste après l'arrivée
+    // sur /dashboard.
+    router.push("/dashboard/");
   };
-
-  const gererRejoindre = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErreur(null);
-    setInfo(null);
-    setChargement(true);
-
-    const resultat = await obtenirCompte(email, motDePasse);
-
-    if (resultat.type === "erreur") {
-      setChargement(false);
-      setErreur(resultat.message);
-      return;
-    }
-    if (resultat.type === "confirmation_requise") {
-      setChargement(false);
-      setInfo(
-        "Compte créé. Ce projet Supabase exige une confirmation par email : vérifiez votre boîte de réception, cliquez sur le lien reçu, puis revenez sur « Rejoindre » avec les mêmes identifiants pour terminer l'inscription."
-      );
-      return;
-    }
-
-    const { session, userId } = resultat;
-
-    const profilExistant = await appliquerSession(session);
-    if (profilExistant) {
-      setChargement(false);
-      allerAuTableauDeBord();
-      return;
-    }
-
-    const { error: profilError } = await supabase.from("utilisateurs").insert({
-      id: userId,
-      entreprise_id: codeEntreprise.trim(),
-      nom,
-      role: "employe",
-    });
-    if (profilError) {
-      setChargement(false);
-      setErreur(
-        "Impossible de rejoindre l'entreprise. Vérifiez le code fourni par votre administrateur : " +
-          profilError.message
-      );
-      return;
-    }
-
-    const profilCharge = await appliquerSession(session);
-    setChargement(false);
-    if (!profilCharge) {
-      setErreur("Le profil vient d'être créé mais n'a pas pu être chargé. Réessayez de vous connecter.");
-      return;
-    }
-
-    allerAuTableauDeBord();
-  };
-
-  const gererSoumission = mode === "connexion" ? gererConnexion : gererRejoindre;
 
   const champClasse =
     "mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-zinc-700 dark:bg-zinc-900";
@@ -193,66 +126,16 @@ function LoginPageInterne() {
             </p>
           )}
 
-          <div className="flex rounded-lg border border-zinc-200 p-1 text-sm dark:border-zinc-800">
-            {(
-              [
-                ["connexion", "Connexion"],
-                ["rejoindre", "Rejoindre une entreprise"],
-              ] as [Mode, string][]
-            ).map(([valeur, libelle]) => (
-              <button
-                key={valeur}
-                type="button"
-                onClick={() => {
-                  setMode(valeur);
-                  setErreur(null);
-                  setInfo(null);
-                }}
-                className={`flex-1 whitespace-nowrap rounded-md px-1.5 py-1.5 text-xs transition sm:text-sm ${
-                  mode === valeur
-                    ? "bg-brand-600 text-white"
-                    : "text-chart-muted hover:text-chart-ink"
-                }`}
-              >
-                {libelle}
-              </button>
-            ))}
-          </div>
-
-          <form onSubmit={gererSoumission} className="space-y-4">
-            {mode === "rejoindre" && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-chart-ink">Votre nom</label>
-                  <input
-                    type="text"
-                    required
-                    value={nom}
-                    onChange={(e) => setNom(e.target.value)}
-                    className={champClasse}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-chart-ink">Code entreprise</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Fourni par votre administrateur"
-                    value={codeEntreprise}
-                    onChange={(e) => setCodeEntreprise(e.target.value)}
-                    className={champClasse}
-                  />
-                </div>
-              </>
-            )}
-
+          <form onSubmit={gererConnexion} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-chart-ink">Email</label>
+              <label className="block text-sm font-medium text-chart-ink">Identifiant</label>
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                autoFocus
+                autoComplete="username"
+                value={identifiant}
+                onChange={(e) => setIdentifiant(e.target.value)}
                 className={champClasse}
               />
             </div>
@@ -262,7 +145,7 @@ function LoginPageInterne() {
               <input
                 type="password"
                 required
-                minLength={6}
+                autoComplete="current-password"
                 value={motDePasse}
                 onChange={(e) => setMotDePasse(e.target.value)}
                 className={champClasse}
@@ -278,12 +161,13 @@ function LoginPageInterne() {
               disabled={chargement}
               className="w-full rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
             >
-              {chargement
-                ? "Veuillez patienter…"
-                : mode === "connexion"
-                  ? "Se connecter"
-                  : "Rejoindre l'entreprise"}
+              {chargement ? "Connexion…" : "Se connecter"}
             </button>
+
+            <p className="text-center text-xs text-chart-muted">
+              Pas encore de compte ? Votre administrateur peut en créer un pour vous
+              depuis les paramètres de l&apos;entreprise.
+            </p>
           </form>
         </div>
       </div>

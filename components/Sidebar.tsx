@@ -35,9 +35,11 @@ export default function Sidebar() {
         <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold text-white">
           <Boxes className="h-5 w-5" strokeWidth={2.25} />
         </span>
-        <div>
-          <p className="text-sm font-bold leading-tight text-white">Le Gestionnaire</p>
-          <p className="text-[11px] uppercase tracking-wider text-navy-400">Poste de contrôle</p>
+        <div className="min-w-0">
+          <p className="text-sm font-extrabold uppercase leading-tight tracking-wide text-white">
+            Le Gestionnaire
+          </p>
+          <p className="truncate text-[11px] text-navy-400">{profil?.entreprise?.nom ?? "…"}</p>
         </div>
       </div>
 
