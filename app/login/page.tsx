@@ -143,12 +143,12 @@ function LoginPageInterne() {
                 <Boxes className="h-5 w-5" strokeWidth={2.25} />
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-chart-ink">Le Gestionnaire</h1>
+            <h1 className="font-heading text-2xl font-extrabold tracking-tight text-chart-ink">Le Gestionnaire</h1>
             <p className="mt-1 text-sm text-chart-muted">Gestion de stock pour PME</p>
           </div>
 
           <div className="hidden lg:block">
-            <h2 className="text-xl font-bold text-chart-ink">
+            <h2 className="font-heading text-2xl font-extrabold tracking-tight text-chart-ink">
               {modeRecuperation ? "Mot de passe oublié" : "Bienvenue"}
             </h2>
             <p className="mt-1 text-sm text-chart-muted">

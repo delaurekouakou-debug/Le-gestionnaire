@@ -49,6 +49,18 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-archivo);
+
+  /* Coins nets, presque droits — signature structurelle épurée : ça change
+     tout rounded-md/lg/xl/2xl de l'app d'un coup, sans toucher chaque
+     fichier. --radius-full reste inchangé pour les vrais cercles (puces de
+     légende, icône ronde). Nos couleurs et le sélecteur de thèmes restent
+     inchangés — seule la géométrie change ici. */
+  --radius-sm: 1px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 3px;
+  --radius-2xl: 4px;
 
   --color-brand-50: var(--color-brand-50);
   --color-brand-100: var(--color-brand-100);

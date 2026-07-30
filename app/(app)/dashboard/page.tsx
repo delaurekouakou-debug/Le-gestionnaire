@@ -7,9 +7,10 @@ import type { MouvementAvecProduit, Produit, TypeMouvement } from "@/lib/types";
 import { statutStock } from "@/lib/stock";
 import StatCard from "@/components/StatCard";
 import MouvementsBarChart, { type JourMouvements } from "@/components/charts/MouvementsBarChart";
-import RepartitionStockBar from "@/components/charts/RepartitionStockBar";
+import RepartitionStockDonut from "@/components/charts/RepartitionStockDonut";
 import ActiviteRecente from "@/components/ActiviteRecente";
 import AReapprovisionner from "@/components/AReapprovisionner";
+import TickDivider from "@/components/TickDivider";
 
 type FiltreType = "tous" | TypeMouvement;
 
@@ -122,8 +123,11 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-chart-ink">Tableau de bord</h1>
-        <p className="text-sm text-chart-muted">Vue d&apos;ensemble de l&apos;activité du stock</p>
+        <h1 className="font-heading text-2xl font-extrabold tracking-tight text-chart-ink">
+          Tableau de bord
+        </h1>
+        <p className="mt-1 text-sm text-chart-muted">Vue d&apos;ensemble de l&apos;activité du stock</p>
+        <TickDivider className="mt-4" />
       </div>
 
       <div className="rounded-xl border border-zinc-200 bg-chart-surface p-4 shadow-sm dark:border-zinc-800">
@@ -198,7 +202,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800 lg:col-span-3">
-          <h2 className="mb-4 text-sm font-semibold text-chart-ink">Mouvements — période sélectionnée</h2>
+          <h2 className="mb-4 font-heading text-sm font-bold text-chart-ink">Mouvements — période sélectionnée</h2>
           {chargement ? (
             <p className="text-sm text-chart-muted">Chargement…</p>
           ) : (
@@ -207,18 +211,18 @@ export default function DashboardPage() {
         </div>
 
         <div className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800 lg:col-span-2">
-          <h2 className="mb-4 text-sm font-semibold text-chart-ink">Répartition du stock</h2>
+          <h2 className="mb-4 font-heading text-sm font-bold text-chart-ink">Répartition du stock</h2>
           {chargement ? (
             <p className="text-sm text-chart-muted">Chargement…</p>
           ) : (
-            <RepartitionStockBar ok={stats.ok} alerte={stats.enAlerte} rupture={stats.enRupture} />
+            <RepartitionStockDonut ok={stats.ok} alerte={stats.enAlerte} rupture={stats.enRupture} />
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800 lg:col-span-2">
-          <h2 className="mb-4 text-sm font-semibold text-chart-ink">À réapprovisionner</h2>
+          <h2 className="mb-4 font-heading text-sm font-bold text-chart-ink">À réapprovisionner</h2>
           {chargement ? (
             <p className="text-sm text-chart-muted">Chargement…</p>
           ) : (
@@ -227,7 +231,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800 lg:col-span-3">
-          <h2 className="mb-4 text-sm font-semibold text-chart-ink">Activité — période sélectionnée</h2>
+          <h2 className="mb-4 font-heading text-sm font-bold text-chart-ink">Activité — période sélectionnée</h2>
           {chargement ? (
             <p className="text-sm text-chart-muted">Chargement…</p>
           ) : (

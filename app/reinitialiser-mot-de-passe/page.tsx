@@ -73,7 +73,7 @@ export default function ReinitialiserMotDePassePage() {
               <Boxes className="h-5 w-5" strokeWidth={2.25} />
             </span>
           </div>
-          <h1 className="text-xl font-bold text-chart-ink">Nouveau mot de passe</h1>
+          <h1 className="font-heading text-2xl font-extrabold tracking-tight text-chart-ink">Nouveau mot de passe</h1>
         </div>
 
         {pret === null && <p className="text-center text-sm text-chart-muted">Vérification du lien…</p>}

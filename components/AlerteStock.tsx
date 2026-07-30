@@ -1,24 +1,16 @@
-import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { statutStock } from "@/lib/stock";
 import type { Produit } from "@/lib/types";
 
 export { statutStock };
 
 const STYLES = {
-  rupture: "bg-critical/10 text-critical",
-  alerte: "bg-warning/15 text-[#8a5a00] dark:text-warning",
-  ok: "bg-good/10 text-good",
-};
-
-const ICONES = {
-  rupture: XCircle,
-  alerte: AlertTriangle,
-  ok: CheckCircle2,
+  rupture: "border border-critical text-critical",
+  alerte: "border border-warning text-[#8a5a00] dark:text-warning",
 };
 
 const LIBELLES = {
   rupture: "Rupture",
-  alerte: "Stock bas",
+  alerte: "Alerte",
   ok: "En stock",
 };
 
@@ -28,12 +20,13 @@ export default function AlerteStock({
   produit: Pick<Produit, "quantite" | "seuil_alerte">;
 }) {
   const statut = statutStock(produit);
-  const Icone = ICONES[statut];
+
+  if (statut === "ok") {
+    return <span className="text-xs text-chart-muted">{LIBELLES.ok}</span>;
+  }
+
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${STYLES[statut]}`}
-    >
-      <Icone className="h-3.5 w-3.5" strokeWidth={2.25} />
+    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${STYLES[statut]}`}>
       {LIBELLES[statut]}
     </span>
   );

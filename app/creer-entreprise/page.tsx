@@ -7,6 +7,34 @@ import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { obtenirCompte } from "@/lib/authFlows";
 import ChampMotDePasse from "@/components/ChampMotDePasse";
+import TickDivider from "@/components/TickDivider";
+
+const ETAPES = [
+  { n: 1 as const, libelle: "Accès" },
+  { n: 2 as const, libelle: "Entreprise" },
+];
+
+function EtapesIndicateur({ etape }: { etape: 1 | 2 }) {
+  return (
+    <div>
+      <div className="flex gap-6">
+        {ETAPES.map((e) => (
+          <span
+            key={e.n}
+            className={`-mb-px border-b-2 pb-2 text-xs font-semibold uppercase tracking-widest ${
+              etape === e.n
+                ? "border-brand-600 text-chart-ink"
+                : "border-transparent text-chart-muted"
+            }`}
+          >
+            {String(e.n).padStart(2, "0")} — {e.libelle}
+          </span>
+        ))}
+      </div>
+      <TickDivider />
+    </div>
+  );
+}
 
 const champClasse =
   "mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-zinc-700 dark:bg-zinc-900";
@@ -125,9 +153,11 @@ export default function CreerEntreprisePage() {
               <Boxes className="h-5 w-5" strokeWidth={2.25} />
             </span>
           </div>
-          <h1 className="text-xl font-bold text-chart-ink">Créer une entreprise</h1>
+          <h1 className="font-heading text-2xl font-extrabold tracking-tight text-chart-ink">Créer une entreprise</h1>
           <p className="mt-1 text-sm text-chart-muted">Accès réservé — code requis</p>
         </div>
+
+        <EtapesIndicateur etape={codeValide ? 2 : 1} />
 
         {!codeValide ? (
           <form onSubmit={gererVerificationCode} className="space-y-4">

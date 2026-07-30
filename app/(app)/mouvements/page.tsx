@@ -12,6 +12,7 @@ import {
 } from "@/lib/export";
 import MouvementForm from "@/components/MouvementForm";
 import MouvementBadge from "@/components/MouvementBadge";
+import TickDivider from "@/components/TickDivider";
 
 type FiltreType = "tous" | TypeMouvement;
 
@@ -93,8 +94,9 @@ export default function MouvementsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-chart-ink">Mouvements de stock</h1>
+        <h1 className="font-heading text-2xl font-extrabold tracking-tight text-chart-ink">Mouvements de stock</h1>
         <p className="text-sm text-chart-muted">Entrées, sorties et ajustements — journal d&apos;audit</p>
+        <TickDivider className="mt-4" />
       </div>
 
       <MouvementForm produits={produits} onEnregistre={declencherRafraichissement} />

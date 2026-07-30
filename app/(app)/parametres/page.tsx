@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { creerCompteMembre } from "@/lib/authFlows";
 import { THEMES, useTheme } from "@/lib/ThemeContext";
 import ChampMotDePasse from "@/components/ChampMotDePasse";
+import TickDivider from "@/components/TickDivider";
 import type { Entreprise, Role, Utilisateur } from "@/lib/types";
 
 const champClasse =
@@ -105,12 +106,13 @@ function ParametresAdmin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-chart-ink">Paramètres</h1>
+        <h1 className="font-heading text-2xl font-extrabold tracking-tight text-chart-ink">Paramètres</h1>
         <p className="text-sm text-chart-muted">Entreprise, membres et droits d&apos;accès</p>
+        <TickDivider className="mt-4" />
       </div>
 
       <section className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800">
-        <h2 className="text-sm font-semibold text-chart-ink">Entreprise</h2>
+        <h2 className="font-heading text-sm font-bold text-chart-ink">Entreprise</h2>
         {chargement ? (
           <p className="mt-2 text-sm text-chart-muted">Chargement…</p>
         ) : (
@@ -130,7 +132,7 @@ function ParametresAdmin() {
       </section>
 
       <section className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-chart-ink">
+        <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-chart-ink">
           <UserPlus className="h-4 w-4" strokeWidth={2} />
           Ajouter un membre
         </h2>
@@ -208,7 +210,7 @@ function ParametresAdmin() {
       </section>
 
       <section className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800">
-        <h2 className="text-sm font-semibold text-chart-ink">Membres</h2>
+        <h2 className="font-heading text-sm font-bold text-chart-ink">Membres</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-chart-muted dark:bg-zinc-900">
@@ -303,12 +305,13 @@ function ParametresEmploye() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-chart-ink">Paramètres</h1>
+        <h1 className="font-heading text-2xl font-extrabold tracking-tight text-chart-ink">Paramètres</h1>
         <p className="text-sm text-chart-muted">Votre compte et l&apos;apparence de l&apos;application</p>
+        <TickDivider className="mt-4" />
       </div>
 
       <section className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800">
-        <h2 className="text-sm font-semibold text-chart-ink">Changer de mot de passe</h2>
+        <h2 className="font-heading text-sm font-bold text-chart-ink">Changer de mot de passe</h2>
         <form onSubmit={gererChangementMotDePasse} className="mt-4 max-w-sm space-y-4">
           <div>
             <label className="block text-sm font-medium text-chart-ink">Mot de passe actuel</label>
@@ -361,7 +364,7 @@ function ParametresEmploye() {
       </section>
 
       <section className="rounded-xl border border-zinc-200 bg-chart-surface p-5 shadow-sm dark:border-zinc-800">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-chart-ink">
+        <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-chart-ink">
           <Palette className="h-4 w-4" strokeWidth={2} />
           Thème
         </h2>

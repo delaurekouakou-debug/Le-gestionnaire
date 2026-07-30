@@ -9,6 +9,7 @@ import ProduitForm from "@/components/ProduitForm";
 import AlerteStock from "@/components/AlerteStock";
 import StockMeter from "@/components/StockMeter";
 import { exporterStockEnExcel, exporterStockEnPdf } from "@/lib/export";
+import TickDivider from "@/components/TickDivider";
 
 export default function ProduitsPage() {
   const [produits, setProduits] = useState<Produit[]>([]);
@@ -53,7 +54,7 @@ export default function ProduitsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-chart-ink">Produits</h1>
+          <h1 className="font-heading text-2xl font-extrabold tracking-tight text-chart-ink">Produits</h1>
           <p className="text-sm text-chart-muted">{produits.length} référence(s) au catalogue</p>
         </div>
         <div className="flex gap-2">
@@ -73,6 +74,7 @@ export default function ProduitsPage() {
           </button>
         </div>
       </div>
+      <TickDivider />
 
       <ProduitForm onCree={declencherRafraichissement} />
 
